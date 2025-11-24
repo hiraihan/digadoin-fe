@@ -1,0 +1,149 @@
+"use client"
+
+import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Menu, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+
+export function Navbar() {
+  const [isOpen, setIsOpen] = React.useState(false)
+  const [scrolled, setScrolled] = React.useState(false)
+  const pathname = usePathname()
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("/#")) {
+      e.preventDefault()
+      const targetId = href.replace("/#", "")
+      const element = document.getElementById(targetId)
+      if (element) {
+        const headerOffset = 80
+        const elementPosition = element.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        })
+      }
+      setIsOpen(false)
+    }
+  }
+
+  const navLinks = [
+    { name: "Services", href: "/#services" },
+    { name: "Projects", href: "/#projects" },
+    { name: "Process", href: "/#process" },
+    { name: "About", href: "/about" },
+    { name: "Pricing", href: "/#pricing" },
+  ]
+
+  return (
+    <header
+      className={cn(
+        "fixed top-0 w-full z-50 transition-all duration-500 ease-out border-b",
+        scrolled
+          ? "bg-background/80 backdrop-blur-2xl border-border/40 shadow-lg"
+          : "bg-transparent border-transparent",
+      )}
+    >
+      <div className="w-full max-w-[1600px] mx-auto px-6 md:px-12 flex items-center justify-between h-16 md:h-20">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white font-bold text-lg shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-all duration-300 group-hover:scale-105">
+            N
+          </div>
+          <span className="text-lg md:text-xl font-semibold tracking-tight">NexusDev</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href || (link.href.startsWith("/#") && pathname === "/")
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={(e) => handleAnchorClick(e, link.href)}
+                className={cn(
+                  "px-4 py-2 text-[15px] font-medium rounded-lg transition-all duration-200 ease-out relative",
+                  isActive
+                    ? "text-foreground bg-secondary/50"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/30",
+                )}
+              >
+                {link.name}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/login"
+            className="px-4 py-2 text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+          >
+            Log in
+          </Link>
+          <Button
+            asChild
+            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] font-medium px-6"
+          >
+            <Link href="/start-project">Start Project</Link>
+          </Button>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden p-2 text-foreground hover:bg-secondary/30 rounded-lg transition-colors"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle menu"
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-background/95 backdrop-blur-2xl border-b border-border/40 shadow-xl animate-in slide-in-from-top-3 duration-300">
+          <div className="p-4 flex flex-col gap-2 max-w-[1600px] mx-auto">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={(e) => handleAnchorClick(e, link.href)}
+                className="text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/30 py-3 px-4 rounded-lg transition-all duration-200"
+              >
+                {link.name}
+              </Link>
+            ))}
+            <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border/40">
+              <Link
+                href="/login"
+                className="text-center py-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/30 rounded-lg transition-all duration-200"
+                onClick={() => setIsOpen(false)}
+              >
+                Log in
+              </Link>
+              <Button
+                asChild
+                className="w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg font-medium"
+              >
+                <Link href="/start-project" onClick={() => setIsOpen(false)}>
+                  Start Project
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  )
+}
