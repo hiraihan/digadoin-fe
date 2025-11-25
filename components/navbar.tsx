@@ -21,7 +21,7 @@ export function Navbar() {
   }, [])
 
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith("/#")) {
+    if (href.startsWith("/#") && pathname === "/") {
       e.preventDefault()
       const targetId = href.replace("/#", "")
       const element = document.getElementById(targetId)
