@@ -12,7 +12,7 @@ export default function AboutPage() {
         <div className="container px-6 md:px-12 max-w-[1400px] mx-auto">
           <div className="max-w-5xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary backdrop-blur-sm">
-              About NexusDev
+              About digado.in
             </div>
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight text-balance">
               Building Digital
@@ -146,7 +146,7 @@ export default function AboutPage() {
         <div className="container px-6 md:px-12 max-w-[1200px] mx-auto relative">
           <div className="text-center space-y-8 max-w-4xl mx-auto">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-              Why Choose <span className="text-gradient-accent">NexusDev</span>?
+              Why Choose <span className="text-gradient-accent">digado.in</span>?
             </h2>
             <p className="text-muted-foreground text-lg md:text-xl leading-relaxed font-light">
               We're not just another development agency. We're your strategic partner in digital transformation,
@@ -164,7 +164,7 @@ export default function AboutPage() {
             Ready to Build Something Amazing?
           </h2>
           <p className="text-muted-foreground text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-light">
-            Join hundreds of successful businesses that have transformed their digital presence with NexusDev.
+            Join hundreds of successful businesses that have transformed their digital presence with digado.in.
           </p>
           <Button
             asChild
@@ -177,8 +177,6 @@ export default function AboutPage() {
           </Button>
         </div>
       </section>
-      
-      {/* Footer dihapus dari sini karena sudah ada di layout */}
     </>
   )
 }

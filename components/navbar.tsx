@@ -12,6 +12,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false)
   const pathname = usePathname()
 
+  // 1. Hook useEffect harus dipanggil SEBELUM return apapun
   React.useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
@@ -20,6 +21,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // 2. Helper function (bukan hook, jadi aman diletakkan di mana saja)
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith("/#") && pathname === "/") {
       e.preventDefault()
@@ -43,9 +45,15 @@ export function Navbar() {
     { name: "Services", href: "/#services" },
     { name: "Projects", href: "/#projects" },
     { name: "Process", href: "/#process" },
-    { name: "About", href: "/about" },
     { name: "Pricing", href: "/#pricing" },
+    { name: "About", href: "/about" },
   ]
+
+  // 3. BARU LAKUKAN PENGECEKAN DISINI (Setelah semua Hooks dipanggil)
+  // Sembunyikan Navbar di Dashboard & Login
+  if (pathname?.startsWith("/dashboard") || pathname === "/login") {
+    return null
+  }
 
   return (
     <header
@@ -59,15 +67,15 @@ export function Navbar() {
       <div className="w-full max-w-[1600px] mx-auto px-6 md:px-12 flex items-center justify-between h-16 md:h-20">
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white font-bold text-lg shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-all duration-300 group-hover:scale-105">
-            N
+            D
           </div>
-          <span className="text-lg md:text-xl font-semibold tracking-tight">NexusDev</span>
+          <span className="text-lg md:text-xl font-semibold tracking-tight">digado.in</span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href || (link.href.startsWith("/#") && pathname === "/")
+            const isActive = pathname === link.href
             return (
               <Link
                 key={link.name}
@@ -77,7 +85,7 @@ export function Navbar() {
                   "px-4 py-2 text-[15px] font-medium rounded-lg transition-all duration-200 ease-out relative",
                   isActive
                     ? "text-foreground bg-secondary/50"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/30",
+                    : "text-foreground/70 hover:text-foreground hover:bg-secondary/30",
                 )}
               >
                 {link.name}
