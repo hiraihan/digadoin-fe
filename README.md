@@ -1,30 +1,52 @@
-# Website sales platform
+# Digadoin - Frontend Dashboard
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+This is the frontend client for the Digadoin platform, a **Website as a Service (WaaS)** solution. It provides a Landing Page for visitors and a comprehensive Dashboard for Clients and Administrators.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/hiraihans-projects/v0-website-sales-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/gXBvAs6zgce)
+## Tech Stack
+*   **Framework**: Next.js 14 (App Router)
+*   **Styling**: Tailwind CSS & Shadcn/UI
+*   **Icons**: Lucide React
+*   **State Management**: React Hooks & Context
+*   **HTTP Client**: Axios (via custom service layer)
 
-## Overview
+## Key Features
+### 1. Public Interface
+*   **Landing Page**: Modern design with Services, Portfolio, and Pricing sections.
+*   **Interactive Elements**: Project filters, Pricing toggle (Monthly/Yearly), and Floating Contact Widget.
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+### 2. Client Dashboard
+*   **Project Management**: Track project status (Timeline), request changes, and view details.
+*   **Billing Center**: View invoices, transaction history, and detailed breakdown.
+*   **Support System**: integrated Ticket system with threading support.
+*   **Auth**: Secure Login, Registration, and Profile management.
 
-## Deployment
+### 3. Admin Dashboard
+*   **Global Overview**: Aggregate stats for revenue and orders.
+*   **Order Management**: Process incoming orders and update project status.
+*   **CMS**: Manage client projects and progress.
 
-Your project is live at:
+## Setup & Installation
 
-**[https://vercel.com/hiraihans-projects/v0-website-sales-platform](https://vercel.com/hiraihans-projects/v0-website-sales-platform)**
+1.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-## Build your app
+2.  **Environment Variables**
+    Copy `.env.example` to `.env.local` and configure:
+    ```bash
+    cp .env.example .env.local
+    ```
+    Ensure `NEXT_PUBLIC_API_BASE_URL` points to your backend (default: `http://localhost:8000/api/v1`).
 
-Continue building your app on:
+3.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-**[https://v0.app/chat/gXBvAs6zgce](https://v0.app/chat/gXBvAs6zgce)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Project Structure
+*   `app/` - App Router pages and layouts.
+*   `components/` - Reusable UI components (shadcn/ui).
+*   `app/services/` - API integration layer (auth, projects, tickets etc.).
+*   `lib/` - Utility functions.
