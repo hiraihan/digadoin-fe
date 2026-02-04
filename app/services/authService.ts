@@ -17,8 +17,8 @@ export const authService = {
         return api.post<User>("/auth/register", userData)
     },
 
-    getMe: async (): Promise<User> => {
-        return api.get<User>("/auth/me")
+    getMe: async (options: any = {}): Promise<User> => {
+        return api.get<User>("/auth/me", options)
     },
 
     updateProfile: async (data: any): Promise<User> => {

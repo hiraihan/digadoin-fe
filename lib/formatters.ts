@@ -1,13 +1,3 @@
-/**
- * Currency and formatting utilities for Digadoin platform
- * Ensures consistent Rupiah formatting across all pages
- */
-
-/**
- * Format number to Indonesian Rupiah
- * @param amount - Amount in Rupiah (e.g., 5000000)
- * @param style - 'full' for "Rp 5.000.000", 'short' for "5jt", 'compact' for "Rp 5jt"
- */
 export function formatCurrency(amount: number, style: 'full' | 'short' | 'compact' = 'full'): string {
     if (style === 'short') {
         if (amount >= 1000000000) {
@@ -35,13 +25,9 @@ export function formatCurrency(amount: number, style: 'full' | 'short' | 'compac
         return `Rp ${amount}`
     }
 
-    // Default: full format
     return `Rp ${amount.toLocaleString('id-ID')}`
 }
 
-/**
- * Format date to Indonesian locale
- */
 export function formatDate(dateString: string, style: 'short' | 'long' = 'short'): string {
     const date = new Date(dateString)
     if (style === 'long') {
@@ -59,9 +45,6 @@ export function formatDate(dateString: string, style: 'short' | 'long' = 'short'
     })
 }
 
-/**
- * Format time ago (relative time)
- */
 export function formatTimeAgo(dateString: string): string {
     const date = new Date(dateString)
     const now = new Date()

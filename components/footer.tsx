@@ -1,17 +1,15 @@
-"use client" // Tambahkan ini agar bisa pakai usePathname
+"use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation" // Import usePathname
+import { usePathname } from "next/navigation"
 import { Twitter, Github, Linkedin } from "lucide-react"
 
 export function Footer() {
   const pathname = usePathname()
 
-  // --- LOGIKA BARU: Sembunyikan Footer di Dashboard & Login ---
   if (pathname.startsWith("/dashboard") || pathname === "/login") {
     return null
   }
-  // -----------------------------------------------------------
 
   return (
     <footer className="border-t border-white/10 bg-black pt-16 pb-8">

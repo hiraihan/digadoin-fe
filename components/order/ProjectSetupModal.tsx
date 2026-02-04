@@ -38,7 +38,6 @@ export function ProjectSetupModal({ isOpen, onClose, onConfirm, planName }: Proj
             return
         }
 
-        // Basic subdomain validation (alphanumeric and hyphens only)
         if (!/^[a-z0-9-]+$/.test(subdomain)) {
             setError("Subdomain can only contain lowercase letters, numbers, and hyphens")
             return
@@ -55,7 +54,6 @@ export function ProjectSetupModal({ isOpen, onClose, onConfirm, planName }: Proj
         }
     }
 
-    // Auto-generate subdomain from name
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newName = e.target.value
         setName(newName)

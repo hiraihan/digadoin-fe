@@ -46,12 +46,8 @@ export function ProjectTimeline({ stage, className }: ProjectTimelineProps) {
 
     return (
         <div className={cn("w-full", className)}>
-            {/* Desktop Timeline */}
             <div className="hidden md:flex items-center justify-between relative">
-                {/* Progress line background */}
                 <div className="absolute left-0 right-0 top-5 h-1 bg-white/10 rounded-full" />
-
-                {/* Progress line filled */}
                 <div
                     className="absolute left-0 top-5 h-1 bg-gradient-to-r from-primary to-green-500 rounded-full transition-all duration-500"
                     style={{
@@ -102,7 +98,6 @@ export function ProjectTimeline({ stage, className }: ProjectTimelineProps) {
                 })}
             </div>
 
-            {/* Mobile Timeline (Vertical) */}
             <div className="md:hidden space-y-4">
                 {stages.map((s, index) => {
                     const Icon = s.icon
@@ -158,7 +153,6 @@ export function ProjectTimeline({ stage, className }: ProjectTimelineProps) {
     )
 }
 
-// Compact version for card display
 export function ProjectStageIndicator({ stage }: { stage: ProjectStage }) {
     const config: Record<ProjectStage, { label: string; className: string }> = {
         pending: {

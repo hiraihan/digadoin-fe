@@ -5,7 +5,6 @@ import { ArrowRight, Users, Target, Zap, Globe, Award, Code, Rocket } from "luci
 export default function AboutPage() {
   return (
     <>
-      {/* Hero Section */}
       <section className="relative pt-40 pb-24 md:pt-48 md:pb-32 overflow-hidden">
         <div className="absolute inset-0 -z-10 grid-pattern opacity-40"></div>
         <div className="absolute inset-0 -z-10 mesh-gradient"></div>
@@ -27,7 +26,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section className="py-20 md:py-24 border-y border-border/40 glass-panel">
         <div className="container px-6 md:px-12 max-w-[1400px] mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-16 md:gap-20">
@@ -53,11 +51,9 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Mission & Vision */}
       <section className="py-24 md:py-32">
         <div className="container px-6 md:px-12 max-w-[1400px] mx-auto">
           <div className="grid lg:grid-cols-2 gap-20 lg:gap-24">
-            {/* Left Column - Mission & Vision */}
             <div className="space-y-16">
               <div className="space-y-6">
                 <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-5 py-2.5 text-sm font-medium text-primary backdrop-blur-sm">
@@ -87,7 +83,6 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Right Column - Values Cards */}
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-br from-primary/20 via-chart-2/20 to-chart-3/20 rounded-3xl blur-3xl opacity-30"></div>
               <div className="relative space-y-6">
@@ -140,7 +135,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Philosophy Section */}
       <section className="py-24 md:py-32 bg-gradient-to-b from-primary/5 to-transparent relative overflow-hidden">
         <div className="absolute inset-0 grid-pattern opacity-20"></div>
         <div className="container px-6 md:px-12 max-w-[1200px] mx-auto relative">
@@ -156,7 +150,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-32 md:py-40 relative overflow-hidden">
         <div className="absolute inset-0 mesh-gradient opacity-40"></div>
         <div className="container px-6 md:px-12 max-w-[1200px] mx-auto text-center relative space-y-10">

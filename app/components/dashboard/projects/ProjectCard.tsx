@@ -25,7 +25,6 @@ interface ProjectCardProps {
 
 const STAGES = ['pending', 'development', 'review', 'live', 'cancelled'] as const
 
-// Map API stage to display config
 function getStageConfig(status: string) {
     const normalizedStatus = status?.toLowerCase() || 'pending'
 
@@ -51,7 +50,6 @@ function getStageConfig(status: string) {
             icon: Rocket,
             pulse: true
         },
-        // Legacy status mapping
         in_progress: {
             label: "Dev",
             className: "bg-blue-500/10 text-blue-500 border-blue-500/30",
@@ -100,17 +98,13 @@ export function ProjectCard({ project, onEdit, onDelete, isAdmin = false, onStag
 
     const handleImpersonate = () => {
         toast.info(`Accessing dashboard as ${project.name}...`)
-        // Logic for auth impersonation would go here
     }
 
-    // Mock Usage Data for "Command Center" feel
-    // Deterministic random based on project ID length or name
     const mockDiskUsage = (project.id.length * 7) % 100
     const mockBandwidth = (project.name.length * 9) % 100
 
     return (
         <Card className="flex flex-col h-full bg-[#111111] border-white/10 hover:border-white/20 transition-all duration-200 group relative overflow-hidden">
-            {/* Glossy top highlight for premium feel */}
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50" />
 
             <CardHeader className="flex flex-row items-start justify-between pb-2">
@@ -131,7 +125,6 @@ export function ProjectCard({ project, onEdit, onDelete, isAdmin = false, onStag
                     )}
                 </div>
 
-                {/* Quick Stage Selector for Admin */}
                 {isAdmin ? (
                     <div className="shrink-0">
                         <Select
@@ -189,7 +182,6 @@ export function ProjectCard({ project, onEdit, onDelete, isAdmin = false, onStag
                     {project.description || "No description provided."}
                 </p>
 
-                {/* Command Center Usage Bars (Visual Only) */}
                 <div className="space-y-3 pt-2 border-t border-white/5">
                     <div className="space-y-1.5">
                         <div className="flex justify-between text-[10px] text-muted-foreground uppercase tracking-wider font-medium">

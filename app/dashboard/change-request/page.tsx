@@ -57,7 +57,6 @@ function ChangeRequestContent() {
         description: "",
     })
 
-    // Fetch user's projects on mount
     useEffect(() => {
         const fetchProjects = async () => {
             try {
@@ -105,10 +104,8 @@ function ChangeRequestContent() {
 
         setIsLoading(true)
         try {
-            // Import ticket service dynamically
             const { ticketService } = await import("@/app/services/ticketService")
 
-            // Include project info in subject/description
             const selectedProject = projects.find(p => String(p.id) === formData.projectId)
 
             await ticketService.createTicket({
@@ -168,14 +165,12 @@ function ChangeRequestContent() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-8 relative z-10">
-            {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-white mb-2">Submit Change Request</h1>
                 <p className="text-muted-foreground">Request a revision, report a bug, or suggest a new feature for your project.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Project Selection */}
                 <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
                     <Label className="text-sm font-semibold text-white mb-4 block">
                         <FolderOpen className="w-4 h-4 inline mr-2" />
@@ -212,7 +207,6 @@ function ChangeRequestContent() {
                     )}
                 </div>
 
-                {/* Request Type */}
                 <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
                     <Label className="text-sm font-semibold text-white mb-4 block">Request Type</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -237,7 +231,6 @@ function ChangeRequestContent() {
                     </div>
                 </div>
 
-                {/* Priority & Subject */}
                 <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl space-y-6">
                     <div className="space-y-3">
                         <Label className="text-sm font-semibold text-white">Priority Level</Label>
@@ -286,7 +279,6 @@ function ChangeRequestContent() {
                     </div>
                 </div>
 
-                {/* File Attachments */}
                 <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
                     <Label className="text-sm font-semibold text-white mb-4 block">Attachments (Optional)</Label>
 
@@ -333,7 +325,6 @@ function ChangeRequestContent() {
                     )}
                 </div>
 
-                {/* Submit */}
                 <div className="flex justify-end gap-4">
                     <Button
                         type="button"

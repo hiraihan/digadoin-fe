@@ -7,7 +7,6 @@ import { ArrowLeft, Home, AlertCircle } from "lucide-react"
 export default function NotFound() {
     return (
         <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
-            {/* Background Effects */}
             <div className="absolute inset-0 grid-pattern opacity-[0.05] pointer-events-none" />
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[128px] pointer-events-none" />
             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[128px] pointer-events-none" />

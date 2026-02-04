@@ -60,7 +60,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
             if (onSubmit) {
                 await onSubmit(formData)
             } else {
-                // Fallback simulation if no handler provided (for testing)
                 await new Promise((resolve) => setTimeout(resolve, 1000))
             }
             onClose()
@@ -75,15 +74,11 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={onClose}
             />
-
-            {/* Modal */}
             <div className="relative w-full max-w-lg mx-4 bg-[#111111] border border-white/10 rounded-3xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
-                {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/5">
                     <div>
                         <h2 className="text-xl font-bold text-white">
@@ -103,9 +98,7 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                     </Button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Full Name */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Full Name
@@ -123,7 +116,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                         </div>
                     </div>
 
-                    {/* Company */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Company Name
@@ -141,7 +133,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                         </div>
                     </div>
 
-                    {/* Email */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Email Address
@@ -160,7 +151,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                         </div>
                     </div>
 
-                    {/* Password (Create Mode Only) */}
                     {mode === 'create' && (
                         <div className="space-y-2">
                             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -185,7 +175,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                         </div>
                     )}
 
-                    {/* Phone */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Phone Number
@@ -203,7 +192,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                         </div>
                     </div>
 
-                    {/* Status */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Status
@@ -226,7 +214,6 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }:
                         </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-3 pt-2">
                         <Button
                             type="button"

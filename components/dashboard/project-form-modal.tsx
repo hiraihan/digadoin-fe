@@ -55,7 +55,6 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
         e.preventDefault()
         setIsLoading(true)
 
-        // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
         setIsLoading(false)
@@ -66,15 +65,11 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={onClose}
             />
-
-            {/* Modal */}
             <div className="relative w-full max-w-lg mx-4 bg-[#111111] border border-white/10 rounded-3xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
-                {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/5">
                     <div>
                         <h2 className="text-xl font-bold text-white">
@@ -94,9 +89,7 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                     </Button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Project Title */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Project Title
@@ -111,7 +104,6 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                         />
                     </div>
 
-                    {/* Client Select */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Client
@@ -133,7 +125,6 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                         </div>
                     </div>
 
-                    {/* Status */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Status
@@ -145,8 +136,8 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, status: option.value }))}
                                     className={`p-3 rounded-xl border text-xs font-medium transition-all ${formData.status === option.value
-                                            ? "border-primary bg-primary/10 text-white"
-                                            : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                                        ? "border-primary bg-primary/10 text-white"
+                                        : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
                                         }`}
                                 >
                                     <div className={`w-2 h-2 rounded-full ${option.color} mx-auto mb-1.5`} />
@@ -156,7 +147,6 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                         </div>
                     </div>
 
-                    {/* Date Range */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -190,7 +180,6 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                         </div>
                     </div>
 
-                    {/* Description */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Description
@@ -204,7 +193,6 @@ export function ProjectFormModal({ isOpen, onClose, mode, projectData }: Project
                         />
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-3 pt-2">
                         <Button
                             type="button"

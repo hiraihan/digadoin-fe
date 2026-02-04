@@ -9,15 +9,12 @@ import { productService } from "@/app/services/productService"
 import { PricingPlan } from "@/app/types/product"
 import { formatCurrency } from "@/lib/formatters"
 
-// Check if user is authenticated by looking for token
-// Check if user is authenticated by looking for token
 const isAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false
   const token = localStorage.getItem("token")
   return !!token && token !== "undefined" && token !== "null"
 }
 
-// Fallback static plans (used if API fails or no data)
 const fallbackPlans = [
   {
     id: 0,
@@ -68,7 +65,6 @@ const fallbackPlans = [
   },
 ]
 
-// Helper to format price - using global formatCurrency
 const formatPrice = (price: number): string => {
   return formatCurrency(price, 'short')
 }
@@ -79,13 +75,10 @@ export function Pricing() {
   const [loading, setLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly")
 
-  // Handle order button click - check auth and redirect accordingly
   const handleOrderClick = (planId: number) => {
     if (isAuthenticated()) {
-      // User is logged in, go directly to order page with planId
       router.push(`/dashboard/order?planId=${planId}`)
     } else {
-      // User not logged in, redirect to login with return URL
       const redirectUrl = encodeURIComponent('/dashboard/order')
       router.push(`/login?redirect=${redirectUrl}&planId=${planId}`)
     }
@@ -96,9 +89,8 @@ export function Pricing() {
       try {
         const data = await productService.getPricingPlans({ active_only: true })
         if (data.length > 0) {
-          // Map API data to component format and limit to 3
           const mapped = data
-            .slice(0, 3) // Limit to 3 plans
+            .slice(0, 3)
             .map((plan: PricingPlan, idx: number) => ({
               id: plan.id,
               name: plan.name,
@@ -106,7 +98,7 @@ export function Pricing() {
               price: plan.price,
               description: plan.description || "",
               features: plan.features || [],
-              is_popular: idx === 1, // Mark second plan as popular
+              is_popular: idx === 1,
             }))
           setPlans(mapped)
         }
@@ -134,9 +126,6 @@ export function Pricing() {
           </p>
         </div>
 
-
-
-        {/* Billing Toggle */}
         <div className="flex justify-center mb-16">
           <div className="flex items-center gap-4 bg-secondary/50 p-1.5 rounded-full border border-border/50">
             <button

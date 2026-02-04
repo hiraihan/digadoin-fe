@@ -1,14 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-// import { Separator } from "@/components/ui/separator" 
 import { User as UserIcon, Mail, Globe, ExternalLink, AlertTriangle, Loader2 } from "lucide-react"
 import { Project, User } from "@/app/types/index"
 import { useEffect, useState } from "react"
 import { projectService } from "@/app/services/projectService"
 import { userService } from "@/app/services/userService"
 import { orderService } from "@/app/services/orderService"
-
-// ... (imports)
 
 
 
@@ -26,7 +23,6 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
     useEffect(() => {
         const fetchContext = async () => {
             try {
-                // 1. Fetch User Data
                 if (userId && userId !== 0) {
                     let user: any = null
                     try {
@@ -35,7 +31,7 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
                         console.warn("Direct fetch failed, falling back")
                     }
 
-                    if (user && user.data) user = user.data // Unwrap if needed
+                    if (user && user.data) user = user.data
 
                     if (!user || (!user.email && !user.name)) {
                         const allUsers = await userService.getAllUsers({ limit: 100 })
@@ -46,15 +42,10 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
                     if (user) setUserProfile(user)
                 }
 
-                // 2. Fetch Projects (Active Only)
                 const allProjects = await projectService.getAllProjects()
-                // Ensure strict type comparison for ID
-                // Fix: projectService returns Project which extends WebsiteInstance. 
-                // WebsiteInstance has 'user_id', not 'clientId'.
                 const userSpecific = allProjects.filter(p => Number(p.user_id) === Number(userId))
                 setUserProjects(userSpecific.slice(0, 5))
 
-                // 3. Calculate LTV (Fetch Orders)
                 if (userId && userId !== 0) {
                     const orders = await orderService.getUserOrders(userId)
                     let totalSpent = 0
@@ -76,8 +67,7 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
         if (userId) fetchContext()
     }, [userId])
 
-    // Fallback visual data
-    const planName = "Pro" // Still mock until logic connects plan
+    const planName = "Pro"
 
     if (loading) {
         return (
@@ -92,17 +82,13 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
     const displayName = (userProfile as any)?.full_name || userProfile?.name || (userProfile as any)?.username || `User #${userId}`
     const displayEmail = userProfile?.email || "No email"
 
-    // Robust Date Strategy: User Profile -> First Project -> Fallback
     let joinDateRaw = (userProfile as any)?.created_at || (userProfile as any)?.createdAt || (userProfile as any)?.joined_at
 
-    // If no user date, try to satisfy "ambil dari api" by inferring from first activity (project)
     if (!joinDateRaw && userProjects.length > 0) {
-        // Find earliest project
         const sortedProjects = [...userProjects].sort((a, b) => new Date((a as any).created_at || 0).getTime() - new Date((b as any).created_at || 0).getTime())
         if ((sortedProjects[0] as any)?.created_at) joinDateRaw = (sortedProjects[0] as any).created_at
     }
 
-    // Ultimate fallback if API data is completely missing
     if (!joinDateRaw) {
         joinDateRaw = new Date().toISOString()
     }
@@ -110,7 +96,6 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
     let memberSince = "N/A"
     if (joinDateRaw) {
         try {
-            // Use Indonesian locale for date
             memberSince = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(joinDateRaw))
         } catch (e) {
             console.warn("Date parse error", e)
@@ -119,7 +104,6 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
 
     return (
         <div className="space-y-6">
-            {/* User Profile Card */}
             <Card className="bg-[#111111]/90 border-white/10 overflow-hidden">
                 <div className="h-24 bg-gradient-to-r from-blue-600/20 to-purple-600/20 relative">
                     <div className="absolute -bottom-8 left-6">
@@ -160,7 +144,6 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
                 </CardContent>
             </Card>
 
-            {/* Active Projects Context */}
             <Card className="bg-[#111111]/90 border-white/10">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -186,7 +169,6 @@ export function TicketSidebar({ userId, tickeId }: TicketSidebarProps) {
                 </CardContent>
             </Card>
 
-            {/* Admin Internal Notes (Mock UI) */}
             <Card className="bg-yellow-500/5 border-yellow-500/20 border-dashed">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-yellow-500/80 flex items-center gap-2">

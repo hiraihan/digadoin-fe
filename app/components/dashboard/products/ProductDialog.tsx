@@ -21,7 +21,7 @@ interface ProductDialogProps {
     onClose: () => void
     onSubmit: (data: any) => Promise<void>
     type: "plan" | "template"
-    item?: PricingPlan | Template | null // If null, it's create mode
+    item?: PricingPlan | Template | null
 }
 
 export function ProductDialog({
@@ -56,7 +56,6 @@ export function ProductDialog({
                 category: (item as Template).category || ""
             })
         } else {
-            // Reset defaults
             setFormData({
                 name: "",
                 description: "",
@@ -76,7 +75,7 @@ export function ProductDialog({
         if (e.target.type === 'number') {
             const num = parseFloat(e.target.value)
             val = isNaN(num) ? 0 : num
-            if (e.target.value === '') val = '' // Allow typing empty string to clear input temporarily
+            if (e.target.value === '') val = ''
         }
         setFormData((prev: any) => ({ ...prev, [e.target.name]: val }))
     }

@@ -9,7 +9,6 @@ interface ProjectStatsProps {
 export function ProjectStats({ projects }: ProjectStatsProps) {
     const total = projects.length
 
-    // Match against actual status values (case-insensitive)
     const active = projects.filter((p) => {
         const status = (p.status || '').toString().toLowerCase()
         return status === 'development' || status === 'in_progress' || status === 'in-progress'
@@ -35,7 +34,6 @@ export function ProjectStats({ projects }: ProjectStatsProps) {
         return status === 'cancelled'
     }).length
 
-    // Other includes suspended, unknown, and any other status
     const other = total - active - completed - pending - review - cancelled
 
     return (

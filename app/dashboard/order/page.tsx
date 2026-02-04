@@ -13,7 +13,6 @@ import { PricingPlan } from "@/app/types/product"
 
 import { ProjectSetupModal } from "@/components/order/ProjectSetupModal"
 
-// Inner component that uses useSearchParams (must be wrapped in Suspense)
 function OrderPageContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -21,20 +20,16 @@ function OrderPageContent() {
     const [loading, setLoading] = useState(true)
     const [ordering, setOrdering] = useState<number | null>(null)
 
-    // Modal State
     const [configPlanId, setConfigPlanId] = useState<number | null>(null)
     const [configPlanName, setConfigPlanName] = useState("")
 
-    // Get planId from URL query params
     const preSelectedPlanId = searchParams.get("planId")
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(
         preSelectedPlanId ? parseInt(preSelectedPlanId, 10) : null
     )
 
-    // Ref for scrolling to selected plan
     const selectedCardRef = useRef<HTMLDivElement>(null)
 
-    // Check Auth on Mount
     useEffect(() => {
         const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null
         if (!token || token === "undefined" || token === "null") {
@@ -58,7 +53,6 @@ function OrderPageContent() {
         fetchPlans()
     }, [])
 
-    // Auto-scroll to selected plan after plans load
     useEffect(() => {
         if (!loading && selectedPlanId && selectedCardRef.current) {
             setTimeout(() => {
@@ -76,12 +70,10 @@ function OrderPageContent() {
         if (!configPlanId) return
 
         try {
-            // Create order with the selected plan and project details
             const result = await orderService.createOrder(configPlanId, undefined, details)
 
             if (result.order_id) {
                 toast.success("Order created! Redirecting to payment...")
-                // Redirect to our payment simulation page
                 router.replace(`/payment/${result.order_id}`)
             } else {
                 toast.error("Failed to create order")

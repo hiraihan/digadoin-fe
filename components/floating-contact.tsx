@@ -12,13 +12,12 @@ export function FloatingContact() {
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true)
-        }, 2000) // Show after 2 seconds
+        }, 2000)
 
         return () => clearTimeout(timer)
     }, [])
 
     const handleWhatsAppClick = () => {
-        // Replace with actual phone number
         const phoneNumber = "6282333016806"
         const message = encodeURIComponent("Halo Digadoin, saya ingin konsultasi tentang pembuatan website/aplikasi.")
         window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank")

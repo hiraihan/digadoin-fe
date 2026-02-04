@@ -19,7 +19,7 @@ interface ProjectDialogProps {
     isOpen: boolean
     onClose: () => void
     onSubmit: (data: CreateProjectDTO | UpdateProjectDTO) => Promise<void>
-    project?: Project | null // if present, in "Edit" mode
+    project?: Project | null
 }
 
 export function ProjectDialog({ isOpen, onClose, onSubmit, project }: ProjectDialogProps) {
@@ -32,7 +32,6 @@ export function ProjectDialog({ isOpen, onClose, onSubmit, project }: ProjectDia
         status: ProjectStatus.PENDING,
     })
 
-    // Reset or populate form when opening
     useEffect(() => {
         if (isOpen) {
             if (project) {
@@ -59,9 +58,7 @@ export function ProjectDialog({ isOpen, onClose, onSubmit, project }: ProjectDia
         e.preventDefault()
         setLoading(true)
         try {
-            // Basic validation
             if (!formData.name || !formData.tier) {
-                // In a real app, show validation error
                 setLoading(false)
                 return
             }
@@ -81,16 +78,11 @@ export function ProjectDialog({ isOpen, onClose, onSubmit, project }: ProjectDia
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={onClose}
             />
-
-            {/* Modal */}
             <div className="relative w-full max-w-lg mx-4 bg-[#111111] border border-white/10 rounded-2xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 p-6 max-h-[90vh] overflow-y-auto">
-
-                {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-white">
                         {isEdit ? "Edit Project" : "Create New Project"}
@@ -104,8 +96,6 @@ export function ProjectDialog({ isOpen, onClose, onSubmit, project }: ProjectDia
                         <X size={20} />
                     </Button>
                 </div>
-
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Project Name <span className="text-red-500">*</span></Label>

@@ -12,8 +12,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false)
   const pathname = usePathname()
 
-  // 1. Hook useEffect harus dipanggil SEBELUM return apapun
   const [isLoggedIn, setIsLoggedIn] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(true) // Start loading by default
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -22,20 +22,26 @@ export function Navbar() {
 
     const verifyAuth = async () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null
-      if (!token) {
+
+      // Strict check to avoid "null" or "undefined" strings
+      if (!token || token === "null" || token === "undefined") {
         setIsLoggedIn(false)
+        setIsLoading(false) // Stop loading immediately if no token
         return
       }
 
       try {
-        // Dynamically import to ensure client-side execution or avoid strict dep cycles if any
         const { authService } = await import("@/app/services/authService")
-        await authService.getMe()
+        // Use skipGlobalError to avoid redirecting/clearing token if check fails
+        await authService.getMe({ skipGlobalError: true })
         setIsLoggedIn(true)
       } catch (e) {
-        console.warn("Token invalid", e)
-        localStorage.removeItem("token")
+        console.warn("Token validation failed (silent)", e)
+        // Do NOT remove token here to prevent accidental logout on network glitches
+        // localStorage.removeItem("token") 
         setIsLoggedIn(false)
+      } finally {
+        setIsLoading(false) // Stop loading after check completes
       }
     }
 
@@ -43,9 +49,8 @@ export function Navbar() {
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, [pathname])
 
-  // 2. Helper function (bukan hook, jadi aman diletakkan di mana saja)
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith("/#") && pathname === "/") {
       e.preventDefault()
@@ -73,8 +78,6 @@ export function Navbar() {
     { name: "About", href: "/about" },
   ]
 
-  // 3. BARU LAKUKAN PENGECEKAN DISINI (Setelah semua Hooks dipanggil)
-  // Sembunyikan Navbar di Dashboard & Login & Register & Legal Pages & Payment Pages
   if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/payment") || pathname === "/login" || pathname === "/register" || pathname === "/terms" || pathname === "/privacy") {
     return null
   }
@@ -96,7 +99,6 @@ export function Navbar() {
           <span className="text-lg md:text-xl font-semibold tracking-tight">digado.in</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
             const isActive = pathname === link.href
@@ -119,7 +121,13 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          {isLoggedIn ? (
+          {isLoading ? (
+            // Skeleton Loader
+            <>
+              <div className="w-20 h-9 rounded-lg bg-white/5 animate-pulse" />
+              <div className="w-32 h-11 rounded-xl bg-primary/20 animate-pulse" />
+            </>
+          ) : isLoggedIn ? (
             <Link
               href="/dashboard"
               className="px-4 py-2 text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
@@ -134,15 +142,16 @@ export function Navbar() {
               Log in
             </Link>
           )}
-          <Button
-            asChild
-            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] font-medium px-6"
-          >
-            <Link href="/start-project">Start Project</Link>
-          </Button>
+          {!isLoading && (
+            <Button
+              asChild
+              className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] font-medium px-6"
+            >
+              <Link href="/start-project">Start Project</Link>
+            </Button>
+          )}
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden p-2 text-foreground hover:bg-secondary/30 rounded-lg transition-colors"
           onClick={() => setIsOpen(!isOpen)}

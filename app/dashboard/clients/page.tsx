@@ -39,7 +39,6 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState<string>("all")
 
-  // State for editing and deleting
   const [selectedClient, setSelectedClient] = useState<User | undefined>(undefined)
   const [profileData, setProfileData] = useState<any>(null)
   const [modalMode, setModalMode] = useState<"create" | "edit">("create")
@@ -49,7 +48,6 @@ export default function ClientsPage() {
     setLoading(true)
     try {
       const data = await userService.getAllUsers({ search })
-      // Filter out admins immediately to protect them
       const nonAdminUsers = data.filter(u => u.role !== 'admin')
       setClients(nonAdminUsers)
     } catch (error) {
@@ -76,7 +74,6 @@ export default function ClientsPage() {
   }
 
   const handleViewProfile = async (client: User) => {
-    // 1. Set initial data with 0 stats
     const profile = {
       name: client.full_name || client.name || "Unnamed",
       email: client.email,
@@ -95,15 +92,11 @@ export default function ClientsPage() {
     }
     setProfileData(profile)
 
-    // 2. Open Modal immediately
     setTimeout(() => {
       setShowProfileModal(true)
     }, 100)
-
-    // 3. Fetch Real Stats
     try {
       const allProjects = await projectService.getAllProjects()
-      // Filter projects for this user
       const clientProjects = allProjects.filter(p => p.user_id === client.id)
 
       const activeCount = clientProjects.filter(p => {
@@ -111,13 +104,12 @@ export default function ClientsPage() {
         return ['active', 'development', 'live', 'review'].includes(s)
       }).length
 
-      // Update state with real numbers
       setProfileData((prev: any) => ({
         ...prev,
         stats: {
           totalProjects: clientProjects.length,
           activeProjects: activeCount,
-          totalSpent: "-" // Revenue calculation requires order Service, keeping simple for now
+          totalSpent: "-"
         }
       }))
     } catch (error) {
@@ -138,14 +130,13 @@ export default function ClientsPage() {
         fetchClients()
         fetchClients()
       } else {
-        // Create Mode
         await userService.createUser({
           name: formData.name,
           email: formData.email,
           password: formData.password,
           phone: formData.phone,
           company: formData.company,
-          role: "user", // Default
+          role: "user",
           is_active: formData.status === 'active'
         })
         toast.success("Client created successfully")
@@ -184,7 +175,6 @@ export default function ClientsPage() {
     return client.full_name || client.name || "Unnamed"
   }
 
-  // Filter logic
   const filteredClients = clients.filter(client => {
     if (filter === 'all') return true
     if (filter === 'active') return client.is_active
@@ -193,13 +183,10 @@ export default function ClientsPage() {
     return true
   })
 
-  // Pagination Logic
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage)
-
-  // Reset page when filter/search changes
   useEffect(() => {
     setCurrentPage(1)
   }, [search, filter, clients])
@@ -219,7 +206,6 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Client Management</h1>
@@ -292,7 +278,6 @@ export default function ClientsPage() {
         client={profileData}
       />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={!!clientToDelete}
         onClose={() => setClientToDelete(null)}
@@ -303,7 +288,6 @@ export default function ClientsPage() {
         variant="danger"
       />
 
-      {/* Clients List Table */}
       <div className="rounded-3xl border border-white/5 bg-[#111111]/50 backdrop-blur-xl overflow-hidden">
         <Table>
           <TableHeader className="bg-white/5 border-b border-white/5">
@@ -344,7 +328,6 @@ export default function ClientsPage() {
                         </AvatarFallback>
                       </Avatar>
 
-                      {/* Name & Email */}
                       <div>
                         <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors">
                           {getDisplayName(client)}
@@ -394,7 +377,6 @@ export default function ClientsPage() {
         </Table>
       </div>
 
-      {/* Pagination Controls */}
       {filteredClients.length > 0 && (
         <div className="flex items-center justify-between px-2">
           <p className="text-sm text-muted-foreground">

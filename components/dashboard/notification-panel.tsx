@@ -38,13 +38,10 @@ export function NotificationPanel() {
     const [isOpen, setIsOpen] = useState(false)
     const [notifications, setNotifications] = useState<Notification[]>([])
 
-    // Fetch notifications
     const fetchNotifications = async () => {
         try {
             const { api } = await import("@/app/services/api")
             const data = await api.get<any[]>("/auth/notifications")
-
-            // Map API response to UI format
             const mapped = data.map((n: any) => ({
                 id: n.id,
                 type: n.type === 'shopping-bag' ? 'project' : n.type, // Map backend type to frontend icon
@@ -61,7 +58,6 @@ export function NotificationPanel() {
         }
     }
 
-    // Poll every 30s
     useEffect(() => {
         if (typeof window !== 'undefined') {
             fetchNotifications()
@@ -81,17 +77,14 @@ export function NotificationPanel() {
     }
 
     const handleNotificationClick = async (notification: Notification) => {
-        // 1. Close panel immediately for responsiveness
         setIsOpen(false)
 
-        // 2. Navigate based on actionUrl or fallback
         if (notification.actionUrl) {
             router.push(notification.actionUrl)
         } else {
             router.push('/dashboard')
         }
 
-        // 3. Mark as read in background (update local state immediately)
         if (!notification.isRead) {
             setNotifications(prev => prev.map(n =>
                 n.id === notification.id ? { ...n, isRead: true } : n
@@ -108,7 +101,6 @@ export function NotificationPanel() {
 
     return (
         <div className="relative">
-            {/* Trigger Button */}
             <Button
                 variant="ghost"
                 size="icon"
@@ -121,18 +113,14 @@ export function NotificationPanel() {
                 )}
             </Button>
 
-            {/* Dropdown Panel */}
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <div
                         className="fixed inset-0 z-40"
                         onClick={() => setIsOpen(false)}
                     />
 
-                    {/* Panel */}
                     <div className="absolute right-0 top-full mt-2 w-[380px] bg-[#111111] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
-                        {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-white/5">
                             <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-sm text-white">Notifications</h3>
@@ -152,7 +140,6 @@ export function NotificationPanel() {
                             )}
                         </div>
 
-                        {/* Notifications List */}
                         <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
                             {notifications.length > 0 ? (
                                 <div className="divide-y divide-white/5">
@@ -191,7 +178,6 @@ export function NotificationPanel() {
                                     })}
                                 </div>
                             ) : (
-                                /* Empty State */
                                 <div className="p-8 text-center">
                                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
                                         <Bell size={20} className="text-muted-foreground" />
@@ -201,7 +187,6 @@ export function NotificationPanel() {
                             )}
                         </div>
 
-                        {/* Footer */}
                         <div className="p-3 border-t border-white/5 bg-white/[0.02]">
                             <Button
                                 variant="ghost"

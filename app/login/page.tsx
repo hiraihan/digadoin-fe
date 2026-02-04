@@ -124,7 +124,7 @@ function LoginPageContent() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
-                <Link href="#" className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors">Forgot password?</Link>
+                <Link href="/forgot-password" className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors">Forgot password?</Link>
               </div>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>

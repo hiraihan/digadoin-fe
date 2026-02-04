@@ -2,7 +2,6 @@ import { ShoppingCart, GraduationCap, LayoutTemplate, Smartphone } from "lucide-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ServicesSection } from "@/app/types/content"
 
-// Icon mapping helper
 const iconMap: any = {
   GraduationCap: GraduationCap,
   ShoppingCart: ShoppingCart,
@@ -32,7 +31,7 @@ export function ServicesGrid({ data }: ServicesGridProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {data.items.map((service, index) => {
-            const Icon = iconMap[service.icon] || LayoutTemplate // Fallback icon
+            const Icon = iconMap[service.icon] || LayoutTemplate
             return (
               <Card
                 key={index}

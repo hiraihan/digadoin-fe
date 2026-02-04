@@ -34,12 +34,24 @@ const clientItems = [
   { icon: HelpCircle, label: "Support", href: "/dashboard/support" },
 ]
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [user, setUser] = useState<{ name: string, email: string, role: string } | null>(null)
   const [role, setRole] = useState("client") // Default to client for safety
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   const pathname = usePathname()
   const router = useRouter()
@@ -73,11 +85,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchUser()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("userRole")
-    localStorage.removeItem("token")
-    toast.success("Logged out", { description: "See you again soon!" })
-    router.push("/login")
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true)
+    setIsUserMenuOpen(false) // Close dropdown if open
+  }
+
+  const performLogout = async () => {
+    try {
+      const { authService } = await import("@/app/services/authService")
+      await authService.logout()
+      toast.success("Logged out", { description: "See you again soon!" })
+    } catch (e) {
+      console.error("Logout failed", e)
+      // Fallback manual cleanup
+      localStorage.removeItem("userRole")
+      localStorage.removeItem("token")
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+      router.push("/login")
+    } finally {
+      setShowLogoutDialog(false)
+    }
   }
 
   const isClient = role === "client" || role === "user"
@@ -147,7 +174,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="p-4 mt-auto border-t border-white/5">
-            <Button variant="ghost" onClick={handleLogout} className={cn("w-full justify-start gap-4 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-2xl h-12 px-4", isCollapsed && "justify-center px-0")}>
+            <Button variant="ghost" onClick={handleLogoutClick} className={cn("w-full justify-start gap-4 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-2xl h-12 px-4", isCollapsed && "justify-center px-0")}>
               <LogOut size={22} className="shrink-0" />
               {!isCollapsed && <span>Log Out</span>}
             </Button>
@@ -204,7 +231,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
 
                     <div
-                      onClick={handleLogout}
+                      onClick={handleLogoutClick}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
                     >
                       <LogOut size={16} />
@@ -223,6 +250,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will end your current session. You will need to log in again to access the dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={performLogout} className="bg-red-600 hover:bg-red-700">
+              Log out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

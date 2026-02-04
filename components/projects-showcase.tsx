@@ -15,12 +15,7 @@ interface ProjectsShowcaseProps {
 export function ProjectsShowcase({ data }: ProjectsShowcaseProps) {
   const [filter, setFilter] = useState("all")
 
-  // Extract unique categories (mock or real logic can be used)
   const categories = ["all", "company profile", "e-commerce", "web app", "mobile app"]
-
-  // Actually filter the items based on simple string matching for now
-  // Assuming project.category matches these keys, or we map them.
-  // Ideally, data.items should have 'category' field corresponding to these.
   const filteredProjects = filter === "all"
     ? data.items
     : data.items.filter(item => item.category.toLowerCase().includes(filter) || item.tags.some(t => t.toLowerCase() === filter))
@@ -39,7 +34,6 @@ export function ProjectsShowcase({ data }: ProjectsShowcaseProps) {
           </p>
         </div>
 
-        {/* Filter Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mb-16">
           {categories.map((cat) => (
             <button

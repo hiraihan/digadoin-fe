@@ -29,7 +29,6 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    // Root Layout WAJIB memiliki tag html dan body
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} font-sans antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary`}
@@ -41,7 +40,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen flex-col">
-            {/* Navbar sudah punya logika untuk sembunyi di dashboard/login */}
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />

@@ -28,7 +28,6 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true)
   const [processingPayment, setProcessingPayment] = useState<number | null>(null)
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -53,14 +52,13 @@ export default function BillingPage() {
   }, [])
 
   const handlePay = async (orderId: number) => {
-    // Navigate to payment page
     window.location.href = `/payment/${orderId}`
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid': return 'default' // primary
-      case 'pending': return 'secondary' // yellow/secondary
+      case 'paid': return 'default'
+      case 'pending': return 'secondary'
       case 'cancelled': return 'destructive'
       case 'failed': return 'destructive'
       default: return 'outline'
@@ -196,7 +194,6 @@ export default function BillingPage() {
             </Table>
           )}
 
-          {/* Pagination Controls */}
           {!loading && orders.length > itemsPerPage && (
             <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-4">
               <div className="text-sm text-muted-foreground">

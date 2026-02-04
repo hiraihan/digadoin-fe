@@ -3,6 +3,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/
 interface FetchOptions extends RequestInit {
     headers?: Record<string, string>
     responseType?: 'json' | 'blob' | 'text'
+    skipGlobalError?: boolean
 }
 
 export class ApiError extends Error {
@@ -58,6 +59,12 @@ async function fetcher<T>(endpoint: string, options: FetchOptions = {}): Promise
 
     if (response.status === 401) {
         console.warn("Unauthorized access")
+
+        // If skipGlobalError is true, we just return empty or throw, allowing caller to handle.
+        if (options.skipGlobalError) {
+            throw new ApiError(401, "Unauthorized", { skipGlobal: true })
+        }
+
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
             // Clear bad tokens
             document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"

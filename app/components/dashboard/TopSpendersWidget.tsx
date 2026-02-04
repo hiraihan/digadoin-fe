@@ -14,7 +14,6 @@ interface TopSpendersProps {
 }
 
 export function TopSpendersWidget({ spenders }: TopSpendersProps) {
-    // Sort by spent desc just in case
     const sortedSpenders = [...spenders].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5)
 
     return (

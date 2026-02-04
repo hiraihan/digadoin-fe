@@ -16,7 +16,6 @@ export function QuickActionsWidget({ pendingProjects, unansweredTickets, pending
                 <CardTitle className="text-white text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Pending Projects */}
                 <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/10 border border-blue-500/10 group hover:border-blue-500/30 transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
@@ -34,7 +33,6 @@ export function QuickActionsWidget({ pendingProjects, unansweredTickets, pending
                     </Link>
                 </div>
 
-                {/* Unanswered Tickets */}
                 <div className="flex items-center justify-between p-4 rounded-xl bg-purple-500/10 border border-purple-500/10 group hover:border-purple-500/30 transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
@@ -52,7 +50,6 @@ export function QuickActionsWidget({ pendingProjects, unansweredTickets, pending
                     </Link>
                 </div>
 
-                {/* New Orders */}
                 <div className="flex items-center justify-between p-4 rounded-xl bg-green-500/10 border border-green-500/10 group hover:border-green-500/30 transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
