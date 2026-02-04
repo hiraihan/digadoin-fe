@@ -75,7 +75,7 @@ export interface LandingPageContent {
 
 export const initialContent: LandingPageContent = {
     hero: {
-        badge: "Accepting New Projects for Q4",
+        badge: "Accepting New Projects for Q1",
         titleLine1: "Digital Empires",
         titleLine2: "Built to Scale",
         description: "We craft high-performance LMS platforms, Marketplaces, and Custom Web Applications that define the future of digital business.",

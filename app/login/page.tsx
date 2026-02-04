@@ -146,11 +146,6 @@ function LoginPageContent() {
               Sign up
             </Link>
           </div>
-
-          <div className="mt-4 text-xs text-center text-muted-foreground bg-white/5 p-3 rounded-lg border border-white/5">
-            <p>Admin: <span className="text-white">admin@digado.in</span> / <span className="text-white">admin123</span></p>
-            <p>Client: <span className="text-white">client@digado.in</span> / <span className="text-white">client123</span></p>
-          </div>
         </div>
       </div>
     </div>
