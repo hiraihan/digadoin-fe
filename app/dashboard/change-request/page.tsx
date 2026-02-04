@@ -37,7 +37,9 @@ const priorityLevels = [
     { value: "critical", label: "Critical", color: "text-red-500", bg: "bg-red-500/10 border-red-500/20" },
 ]
 
-export default function ChangeRequestPage() {
+import { Suspense } from "react"
+
+function ChangeRequestContent() {
     const searchParams = useSearchParams()
     const projectIdParam = searchParams.get("projectId")
 
@@ -351,5 +353,13 @@ export default function ChangeRequestPage() {
                 </div>
             </form>
         </div>
+    )
+}
+
+export default function ChangeRequestPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Loading form...</div>}>
+            <ChangeRequestContent />
+        </Suspense>
     )
 }
