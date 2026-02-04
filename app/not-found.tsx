@@ -1,66 +1,50 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Home, ArrowLeft } from "lucide-react"
+import { ArrowLeft, Home, AlertCircle } from "lucide-react"
 
 export default function NotFound() {
     return (
-        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
             {/* Background Effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] opacity-50" />
-                <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] opacity-50" />
-                <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
-            </div>
+            <div className="absolute inset-0 grid-pattern opacity-[0.05] pointer-events-none" />
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[128px] pointer-events-none" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[128px] pointer-events-none" />
 
-            <div className="relative z-10 text-center max-w-lg mx-auto">
-                {/* 404 Number */}
-                <div className="relative mb-8">
-                    <h1 className="text-[150px] md:text-[200px] font-bold text-transparent bg-clip-text bg-gradient-to-b from-white/20 to-white/5 leading-none select-none">
-                        404
-                    </h1>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                            <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
-                                <div className="w-8 h-8 rounded-full bg-primary" />
-                            </div>
-                        </div>
-                    </div>
+            <div className="relative max-w-lg w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+                    <AlertCircle className="w-20 h-20 text-primary relative z-10" />
                 </div>
 
-                {/* Message */}
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                    Page Not Found
-                </h2>
-                <p className="text-muted-foreground mb-8 leading-relaxed">
-                    Oops! The page you're looking for doesn't exist or has been moved.
-                    Let's get you back on track.
-                </p>
+                <div className="space-y-4">
+                    <h1 className="text-6xl font-bold tracking-tighter text-white">404</h1>
+                    <h2 className="text-2xl font-semibold text-white/90">Page not found</h2>
+                    <p className="text-muted-foreground text-lg max-w-sm mx-auto">
+                        Sorry, we couldn't find the page you're looking for. It might have been moved or doesn't exist.
+                    </p>
+                </div>
 
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/">
-                        <Button className="w-full sm:w-auto bg-white text-black hover:bg-gray-200 rounded-xl h-12 px-6 font-bold shadow-lg shadow-white/10">
-                            <Home className="w-4 h-4 mr-2" />
-                            Go Home
-                        </Button>
-                    </Link>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                     <Button
+                        asChild
                         variant="outline"
-                        onClick={() => window.history.back()}
-                        className="w-full sm:w-auto border-white/10 bg-white/5 text-white hover:bg-white/10 rounded-xl h-12 px-6"
+                        className="rounded-xl border-white/10 hover:bg-white/5 h-12 px-6"
                     >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Go Back
+                        <Link href="javascript:history.back()">
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Go Back
+                        </Link>
+                    </Button>
+                    <Button
+                        asChild
+                        className="rounded-xl bg-primary hover:bg-primary/90 h-12 px-6"
+                    >
+                        <Link href="/">
+                            <Home className="w-4 h-4 mr-2" />
+                            Return to Home
+                        </Link>
                     </Button>
                 </div>
-
-                {/* Additional Help */}
-                <p className="text-sm text-muted-foreground mt-12">
-                    Need help?{" "}
-                    <Link href="/dashboard/support" className="text-primary hover:underline">
-                        Contact Support
-                    </Link>
-                </p>
             </div>
         </div>
     )

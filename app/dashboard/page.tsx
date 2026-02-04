@@ -1,128 +1,348 @@
 "use client"
 
-import { useState, useEffect } from "react" // Tambah useEffect
+import { useState, useEffect } from "react"
 import { ArrowUpRight, Users, DollarSign, ShoppingBag, Activity, Clock, FileText, CreditCard } from "lucide-react"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
+import { analyticsService, RevenueDataPoint, ActivityItem as AnalyticsActivity } from "@/app/services/analyticsService"
+import { formatCurrency } from "@/lib/formatters"
+import { adminOrderService } from "@/app/services/adminOrderService"
+import { projectService } from "@/app/services/projectService"
+import { SkeletonDashboard } from "@/components/ui/skeleton"
+import { ticketService } from "@/app/services/ticketService"
 
-const adminData = [
-  { name: "Jan", revenue: 4000 }, { name: "Feb", revenue: 3000 }, { name: "Mar", revenue: 5000 },
-  { name: "Apr", revenue: 2780 }, { name: "May", revenue: 1890 }, { name: "Jun", revenue: 2390 },
-  { name: "Jul", revenue: 3490 }, { name: "Aug", revenue: 4200 }, { name: "Sep", revenue: 5100 },
-  { name: "Oct", revenue: 6200 }, { name: "Nov", revenue: 7400 }, { name: "Dec", revenue: 8900 },
-]
+import dynamic from "next/dynamic"
 
-const clientData = [
-  { name: "W1", progress: 10 }, { name: "W2", progress: 25 }, { name: "W3", progress: 40 },
-  { name: "W4", progress: 45 }, { name: "W5", progress: 60 }, { name: "W6", progress: 65 },
-]
+const QuickActionsWidget = dynamic(() => import("@/app/components/dashboard/QuickActionsWidget").then(mod => mod.QuickActionsWidget), {
+  loading: () => <SkeletonDashboard className="h-40 w-full" />,
+  ssr: false
+})
+const TopSpendersWidget = dynamic(() => import("@/app/components/dashboard/TopSpendersWidget").then(mod => mod.TopSpendersWidget), {
+  loading: () => <SkeletonDashboard className="h-64 w-full" />,
+  ssr: false
+})
+
+// ... imports remain the same
 
 export default function DashboardPage() {
-  const [role, setRole] = useState("admin")
+  const [role, setRole] = useState<string | null>(null)
+  const [clientStats, setClientStats] = useState({ totalProjects: 0, activeProjects: 0, pendingProjects: 0, completedProjects: 0, totalSpent: 0 })
+  const [myProjects, setMyProjects] = useState<any[]>([])
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [adminStats, setAdminStats] = useState({ revenue: 0, activeProjects: 0, totalClients: 0, serverLoad: 0 })
+  const [loading, setLoading] = useState(true)
 
+  // New State for Widgets
+  const [quickInfos, setQuickInfos] = useState({ pendingProjects: 0, unansweredTickets: 0, pendingOrders: 0 })
+  const [topSpenders, setTopSpenders] = useState<any[]>([])
+
+  const [recentActivities, setRecentActivities] = useState<{ title: string; desc: string; time: string; type: string }[]>([])
+
+  // EFFECT 1: Initial Data Load
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole")
-    if (storedRole) setRole(storedRole)
+    const checkRoleAndFetch = async () => {
+      const { authService } = await import("@/app/services/authService")
+      try {
+        const user = await authService.getMe()
+        const userRole = user.role
+        setRole(userRole)
+
+        setLoading(true)
+        const { dashboardService } = await import("@/app/services/dashboardService")
+
+        if (userRole === 'admin' || userRole === 'editor') {
+          // --- ADMIN DATA FETCHING ---
+
+          let totalRevenue = 0
+          let allOrders: any[] = []
+
+          // 1. Fetch Orders & Revenue & Top Spenders
+          try {
+            const ordersResp = await adminOrderService.getAllOrders({})
+            if (ordersResp && ordersResp.items) {
+              allOrders = ordersResp.items
+
+              // Revenue
+              totalRevenue = allOrders
+                .filter((o: any) => o.status === 'paid')
+                .reduce((sum: number, o: any) => sum + (o.total_price || 0), 0)
+
+              // Top Spenders Calculation
+              const spenderMap: Record<string, any> = {}
+              allOrders.forEach((o: any) => {
+                if (o.status === 'paid') {
+                  const email = o.user_email
+                  if (!spenderMap[email]) {
+                    spenderMap[email] = { name: o.user_name, email: o.user_email, totalSpent: 0, ordersCount: 0 }
+                  }
+                  spenderMap[email].totalSpent += o.total_price || 0
+                  spenderMap[email].ordersCount += 1
+                }
+              })
+              setTopSpenders(Object.values(spenderMap))
+            }
+          } catch (e) {
+            console.warn("Failed to fetch orders", e)
+          }
+
+          // 2. Projects & Pending Count
+          let activeProjectsCount = 0
+          let pendingProjectsCount = 0
+          try {
+            const allProjects = await projectService.getAllProjects()
+            activeProjectsCount = allProjects.filter(p => p.status !== 'cancelled').length
+            pendingProjectsCount = allProjects.filter(p => p.status === 'pending').length
+          } catch (e) {
+            console.warn("Failed to fetch projects", e)
+          }
+
+          // 3. Tickets Count
+          let openTicketsCount = 0
+          try {
+            const tickets = await ticketService.getAllTickets({ status: 'open' })
+            // API might return array directly or wrapped
+            const ticketList = Array.isArray(tickets) ? tickets : (tickets as any).items || []
+            openTicketsCount = ticketList.length
+          } catch (e) {
+            console.warn("Failed fetch tickets", e)
+          }
+
+          // 4. Pending Orders
+          const pendingOrdersCount = allOrders.filter(o => o.status === 'pending').length
+
+          // Update State
+          setQuickInfos({
+            pendingProjects: pendingProjectsCount,
+            unansweredTickets: openTicketsCount,
+            pendingOrders: pendingOrdersCount
+          })
+
+          const baseStats = await dashboardService.getAdminStats()
+          setAdminStats({
+            ...baseStats,
+            revenue: totalRevenue,
+            activeProjects: activeProjectsCount
+          })
+
+          // Recent Activities
+          try {
+            const activities = await analyticsService.getRecentActivities(5)
+            if (activities.length > 0) {
+              setRecentActivities(activities.map(a => ({
+                title: a.title,
+                desc: a.description,
+                time: formatTimeAgo(a.created_at),
+                type: a.type
+              })))
+            }
+          } catch (e) { console.warn(e) }
+
+        } else {
+          // ... Client Logic (Unchanged) ...
+          const stats = await dashboardService.getClientStats()
+          setClientStats(stats)
+          const projects = await projectService.getMyProjects()
+          setMyProjects(projects)
+          try {
+            const { api } = await import("@/app/services/api")
+            const data = await api.get<any[]>("/auth/notifications")
+            setNotifications(data.slice(0, 5))
+          } catch (e) { console.warn(e) }
+        }
+      } catch (e) {
+        console.error("Dashboard Load Error", e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    checkRoleAndFetch()
   }, [])
+
+  // Helper to format time
+  const formatTimeAgo = (dateStr: string): string => {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    if (diffMins < 60) return `${diffMins}m ago`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays}d ago`
+  }
+
+  // Prevent flicker
+  if (loading || !role) {
+    return <SkeletonDashboard />
+  }
 
   return (
     <div className="space-y-10 relative z-10">
       {/* Header Title */}
       <div>
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-          {role === "client" ? "Project Overview" : "Dashboard Overview"}
+          {(role === "client" || role === "user") ? "Project Overview" : "Dashboard Overview"}
         </h1>
         <p className="text-muted-foreground">
-          {role === "client" ? "Track your project progress and milestones." : "Welcome back, here's what's happening today."}
+          {(role === "client" || role === "user") ? "Track your project progress and milestones." : "Welcome back, here's what's happening today."}
         </p>
       </div>
 
       {/* --- TAMPILAN ADMIN --- */}
       {role === "admin" && (
         <>
+
+
+          {/* 2. Main Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Total Revenue" value="$45,231.89" trend="+20.1%" icon={DollarSign} trendColor="text-green-400" color="primary" />
-            <StatCard title="Active Projects" value="12" trend="+2 new" icon={ShoppingBag} trendColor="text-white/70" color="blue-500" />
-            <StatCard title="Total Clients" value="284" trend="+18%" icon={Users} trendColor="text-green-400" color="purple-500" />
-            <StatCard title="Server Load" value="34%" trend="Optimal" icon={Activity} trendColor="text-white/70" color="pink-500" />
+            <StatCard
+              title="Total Revenue"
+              value={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(adminStats.revenue)}
+              trend="+20.1%"
+              icon={DollarSign}
+              trendColor="text-green-400"
+              color="primary"
+            />
+            <StatCard title="Active Projects" value={adminStats.activeProjects} trend="+2 new" icon={ShoppingBag} trendColor="text-white/70" color="blue-500" />
+            <StatCard title="Total Clients" value={adminStats.totalClients} trend="+18%" icon={Users} trendColor="text-green-400" color="purple-500" />
+            <StatCard title="Server Load" value={`${adminStats.serverLoad}%`} trend="Optimal" icon={Activity} trendColor="text-white/70" color="pink-500" />
           </div>
 
+          {/* 2. Quick Info Widget (Moved Below Stats) */}
+          <div className="mb-8">
+            <QuickActionsWidget
+              pendingProjects={quickInfos.pendingProjects}
+              unansweredTickets={quickInfos.unansweredTickets}
+              pendingOrders={quickInfos.pendingOrders}
+            />
+          </div>
+
+          {/* 3. Analytics & Top Spenders */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl min-h-[400px] flex flex-col shadow-2xl">
-               <div className="flex items-center justify-between mb-8">
-                   <h3 className="text-xl font-bold text-white">Revenue Analytics</h3>
-                   <div className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full">Yearly View</div>
-               </div>
-               <div className="flex-1 w-full h-[300px]">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={adminData}>
-                      <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 12}} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 12}} />
-                      <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
-                      <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                    </AreaChart>
-                 </ResponsiveContainer>
-               </div>
+            <div className="lg:col-span-2 min-h-[400px]">
+              {/* Replaced Chart with Top Spenders Widget for better data accuracy */}
+              <TopSpendersWidget spenders={topSpenders} />
             </div>
+
             <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
-                <h3 className="text-xl font-bold text-white mb-6">Recent Activity</h3>
-                <div className="space-y-6">
-                    <ActivityItem title="New Project Started" desc="LMS Platform" time="2m ago" icon={ShoppingBag} color="bg-primary/10 text-primary" />
-                    <ActivityItem title="New Client" desc="Sarah Connor joined" time="1h ago" icon={Users} color="bg-green-500/10 text-green-500" />
-                    <ActivityItem title="Payment Received" desc="$1,200 from Alpha" time="1d ago" icon={DollarSign} color="bg-purple-500/10 text-purple-500" />
-                </div>
+              <h3 className="text-xl font-bold text-white mb-6">Recent Activity</h3>
+              <div className="space-y-6">
+                {recentActivities.length > 0 ? (
+                  recentActivities.slice(0, 3).map((activity, idx) => (
+                    <ActivityItem
+                      key={idx}
+                      title={activity.title}
+                      desc={activity.desc}
+                      time={activity.time}
+                      icon={activity.type === 'new_project' ? ShoppingBag : activity.type === 'new_client' ? Users : DollarSign}
+                      color={activity.type === 'new_project' ? 'bg-primary/10 text-primary' : activity.type === 'new_client' ? 'bg-green-500/10 text-green-500' : 'bg-purple-500/10 text-purple-500'}
+                    />
+                  ))
+                ) : (
+                  <>
+                    <div className="text-center text-muted-foreground py-8">No recent activity</div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </>
       )}
 
       {/* --- TAMPILAN CLIENT (POV Berbeda) --- */}
-      {role === "client" && (
+      {(role === "client" || role === "user") && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Project Status" value="65%" trend="On Track" icon={Activity} trendColor="text-green-400" color="primary" />
-            <StatCard title="Next Milestone" value="UAT Test" trend="Due: Oct 24" icon={Clock} trendColor="text-yellow-400" color="blue-500" />
-            <StatCard title="Outstanding Invoice" value="$1,500" trend="Due in 3 days" icon={CreditCard} trendColor="text-red-400" color="purple-500" />
-            <StatCard title="Documents" value="12 Files" trend="3 New" icon={FileText} trendColor="text-white/70" color="pink-500" />
+            <StatCard title="Total Projects" value={clientStats.totalProjects} trend="All Time" icon={ShoppingBag} trendColor="text-white/70" color="primary" />
+            <StatCard title="Active Projects" value={clientStats.activeProjects} trend="In Progress" icon={Activity} trendColor="text-green-400" color="blue-500" />
+            <StatCard title="Total Spent" value={formatCurrency(clientStats.totalSpent)} trend="Lifetime" icon={DollarSign} trendColor="text-white/70" color="green-500" />
+            <StatCard title="Pending" value={clientStats.pendingProjects} trend="Waiting Approval" icon={Clock} trendColor="text-yellow-400" color="purple-500" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl min-h-[400px] flex flex-col shadow-2xl">
-               <div className="flex items-center justify-between mb-8">
-                   <h3 className="text-xl font-bold text-white">Development Progress</h3>
-                   <div className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full">Weekly Sprint</div>
-               </div>
-               <div className="flex-1 w-full h-[300px]">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={clientData}>
-                      <defs>
-                        <linearGradient id="colorProgress" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 12}} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 12}} />
-                      <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
-                      <Area type="monotone" dataKey="progress" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorProgress)" />
-                    </AreaChart>
-                 </ResponsiveContainer>
-               </div>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-bold text-white">Active Projects Overview</h3>
+                <div className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full">{myProjects.length} Projects</div>
+              </div>
+              <div className="flex-1 overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 text-xs text-muted-foreground uppercase tracking-wider">
+                      <th className="pb-4 pl-2 font-medium">Project Name</th>
+                      <th className="pb-4 font-medium">Stage</th>
+                      <th className="pb-4 font-medium">Status</th>
+                      <th className="pb-4 font-medium text-right pr-2">Total Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm">
+                    {myProjects.length > 0 ? (
+                      myProjects.slice(0, 5).map((project, i) => (
+                        <tr key={project.id} className="group hover:bg-white/[0.02] border-b border-white/5 last:border-0 transition-colors">
+                          <td className="py-4 pl-2 font-medium text-white group-hover:text-primary transition-colors">
+                            {project.name || project.subdomain || `Project #${project.id}`}
+                            <div className="text-xs text-muted-foreground font-normal">{project.subdomain}.digadoin.com</div>
+                          </td>
+                          <td className="py-4">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 capitalize">
+                              {project.stage || 'Pending'}
+                            </span>
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-2">
+                              {/* Pulse for Active/Live, Yellow for In Progress/Dev, Gray for others */}
+                              <div className={`w-1.5 h-1.5 rounded-full ${project.display_status === 'Active' ? 'bg-green-500 animate-pulse' :
+                                (project.display_status === 'In Progress' || project.display_status === 'In Dev') ? 'bg-blue-500' :
+                                  project.display_status === 'Queue' ? 'bg-yellow-500' :
+                                    'bg-gray-500'
+                                }`} />
+                              <span className="text-gray-300 capitalize">{project.display_status || project.stage || 'Draft'}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 pr-2 text-right tabular-nums text-gray-300">
+                            {formatCurrency(project.total_value || 0)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                          No active projects found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
-                <h3 className="text-xl font-bold text-white mb-6">Notifications</h3>
-                <div className="space-y-6">
-                    <ActivityItem title="Milestone Completed" desc="Phase 1: Design System" time="Yesterday" icon={Activity} color="bg-green-500/10 text-green-500" />
-                    <ActivityItem title="New Invoice" desc="#INV-2024-001 generated" time="2d ago" icon={CreditCard} color="bg-purple-500/10 text-purple-500" />
-                    <ActivityItem title="Meeting Scheduled" desc="Weekly Sync with Team" time="Mon, 10:00 AM" icon={Users} color="bg-blue-500/10 text-blue-500" />
-                </div>
+              <h3 className="text-xl font-bold text-white mb-6">Recent Notifications</h3>
+              <div className="space-y-6">
+                {notifications.length > 0 ? (
+                  notifications.map((n, idx) => (
+                    <div key={idx} className="flex items-start gap-4">
+                      <div className={`p-3 rounded-2xl shrink-0 ${n.type === 'payment' ? 'bg-purple-500/10 text-purple-500' :
+                        n.type === 'project' || n.type === 'shopping-bag' ? 'bg-blue-500/10 text-blue-500' :
+                          'bg-primary/10 text-primary'
+                        }`}>
+                        {n.type === 'payment' ? <DollarSign size={18} /> :
+                          n.type === 'project' || n.type === 'shopping-bag' ? <ShoppingBag size={18} /> :
+                            <Activity size={18} />}
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <h5 className="text-sm font-bold text-white mb-0.5 line-clamp-1">{n.title}</h5>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{n.description}</p>
+                        <span className="text-[10px] text-muted-foreground/60 font-medium pt-1.5 block tabular-nums">
+                          {new Date(n.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-10 text-muted-foreground text-sm">
+                    No new notifications.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </>
@@ -130,6 +350,7 @@ export default function DashboardPage() {
     </div>
   )
 }
+
 
 // --- Sub-Components (Reused) ---
 function StatCard({ title, value, trend, icon: Icon, trendColor, color }: any) {
@@ -153,16 +374,16 @@ function StatCard({ title, value, trend, icon: Icon, trendColor, color }: any) {
 }
 
 function ActivityItem({ title, desc, time, icon: Icon, color }: any) {
-    return (
-        <div className="flex items-start gap-4 relative group">
-            <div className={`p-3 rounded-2xl shrink-0 ${color} group-hover:scale-105 transition-transform`}>
-                <Icon size={18} />
-            </div>
-            <div className="flex-1 pt-1">
-                <h5 className="text-sm font-bold text-white mb-0.5">{title}</h5>
-                <p className="text-xs text-muted-foreground">{desc}</p>
-            </div>
-            <span className="text-xs text-muted-foreground/60 font-medium pt-1 tabular-nums">{time}</span>
-        </div>
-    )
+  return (
+    <div className="flex items-start gap-4 relative group">
+      <div className={`p-3 rounded-2xl shrink-0 ${color} group-hover:scale-105 transition-transform`}>
+        <Icon size={18} />
+      </div>
+      <div className="flex-1 pt-1">
+        <h5 className="text-sm font-bold text-white mb-0.5">{title}</h5>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <span className="text-xs text-muted-foreground/60 font-medium pt-1 tabular-nums">{time}</span>
+    </div>
+  )
 }

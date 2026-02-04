@@ -95,9 +95,9 @@ export function SkeletonStatCard() {
 }
 
 // Dashboard page skeleton
-export function SkeletonDashboard() {
+export function SkeletonDashboard({ className }: SkeletonProps) {
     return (
-        <div className="space-y-10">
+        <div className={cn("space-y-10", className)}>
             <div className="space-y-2">
                 <Skeleton className="h-10 w-64" />
                 <SkeletonText className="w-80" />

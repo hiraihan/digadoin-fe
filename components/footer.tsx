@@ -87,13 +87,13 @@ export function Footer() {
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">© 2025 digado.in. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="#" className="text-muted-foreground hover:text-blue-400 transition-colors">
+            <Link href="https://x.com/m_rhnnn" target="_blank" className="text-muted-foreground hover:text-blue-400 transition-colors">
               <Twitter className="h-5 w-5" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:text-blue-400 transition-colors">
+            <Link href="https://github.com/hiraihan" target="_blank" className="text-muted-foreground hover:text-blue-400 transition-colors">
               <Github className="h-5 w-5" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:text-blue-400 transition-colors">
+            <Link href="https://www.linkedin.com/in/muhammad-raihan-335294264/" target="_blank" className="text-muted-foreground hover:text-blue-400 transition-colors">
               <Linkedin className="h-5 w-5" />
             </Link>
           </div>

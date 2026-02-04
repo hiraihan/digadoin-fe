@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -10,20 +10,38 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Loader2, AlertCircle, Lock, Mail, User, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
+import { authService } from "@/app/services/authService"
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState("")
-  
+
+  // Get redirect params from URL (to preserve through registration)
+  const redirectUrl = searchParams.get("redirect")
+  const planId = searchParams.get("planId")
+
+  // Build login URL with preserved params
+  const getLoginUrl = () => {
+    if (redirectUrl) {
+      const params = new URLSearchParams()
+      params.set("redirect", redirectUrl)
+      if (planId) params.set("planId", planId)
+      return `/login?${params.toString()}`
+    }
+    return "/login"
+  }
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    role: "user" // Default role
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,14 +75,25 @@ export default function RegisterPage() {
 
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      await authService.register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
+      })
 
-    toast.success("Registration Successful!", {
-      description: "Please check your email to verify your account."
-    })
-    
-    router.push("/login")
+      toast.success("Registration Successful!", {
+        description: "Please check your email to verify your account."
+      })
+
+      // Redirect to login with preserved params
+      router.push(getLoginUrl())
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -75,9 +104,9 @@ export default function RegisterPage() {
           <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-green-500/20 rounded-full blur-[120px] opacity-30" />
           <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[150px] opacity-30" />
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
-          
+
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-auto opacity-40 rotate-[-12deg] hover:rotate-[-10deg] hover:scale-105 transition-all duration-1000 ease-in-out grayscale hover:grayscale-0">
-             <Image src="/modern-dashboard-dark-mode-ui.jpg" width={1200} height={800} alt="Preview" className="rounded-xl shadow-2xl border border-white/10" />
+            <Image src="/modern-dashboard-dark-mode-ui.jpg" width={1200} height={800} alt="Preview" className="rounded-xl shadow-2xl border border-white/10" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/50 to-transparent" />
         </div>
@@ -123,17 +152,19 @@ export default function RegisterPage() {
               <Label htmlFor="fullName" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Full Name</Label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><User size={18} /></div>
-                <Input 
-                  id="fullName" 
+                <Input
+                  id="fullName"
                   name="fullName"
-                  type="text" 
-                  value={formData.fullName} 
-                  onChange={handleChange} 
-                  placeholder="John Doe" 
-                  className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all" 
-                  disabled={isLoading} 
+                  type="text"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="John Doe"
+                  className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
+                  disabled={isLoading}
                 />
               </div>
+
+              {/* Role selection removed - Public registration is Client only */}
             </div>
 
             {/* Email */}
@@ -141,15 +172,15 @@ export default function RegisterPage() {
               <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Mail size={18} /></div>
-                <Input 
-                  id="email" 
+                <Input
+                  id="email"
                   name="email"
-                  type="email" 
-                  value={formData.email} 
-                  onChange={handleChange} 
-                  placeholder="you@example.com" 
-                  className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all" 
-                  disabled={isLoading} 
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -159,18 +190,18 @@ export default function RegisterPage() {
               <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>
-                <Input 
-                  id="password" 
+                <Input
+                  id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"} 
-                  value={formData.password} 
-                  onChange={handleChange} 
-                  placeholder="••••••••" 
-                  className="pl-10 pr-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all" 
-                  disabled={isLoading} 
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="pl-10 pr-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
+                  disabled={isLoading}
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
                 >
@@ -185,18 +216,18 @@ export default function RegisterPage() {
               <Label htmlFor="confirmPassword" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm Password</Label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>
-                <Input 
-                  id="confirmPassword" 
+                <Input
+                  id="confirmPassword"
                   name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"} 
-                  value={formData.confirmPassword} 
-                  onChange={handleChange} 
-                  placeholder="••••••••" 
-                  className="pl-10 pr-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all" 
-                  disabled={isLoading} 
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="pl-10 pr-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
+                  disabled={isLoading}
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
                 >
@@ -207,14 +238,14 @@ export default function RegisterPage() {
 
             {/* Terms & Conditions */}
             <div className="flex items-start gap-3">
-              <Checkbox 
-                id="terms" 
+              <Checkbox
+                id="terms"
                 checked={agreedToTerms}
                 onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
                 className="mt-0.5 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                I agree to the <Link href="#" className="text-primary hover:underline">Terms of Service</Link> and <Link href="#" className="text-primary hover:underline">Privacy Policy</Link>
+                I agree to the <Link href="/terms" className="text-primary hover:underline" target="_blank">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>
               </label>
             </div>
 
@@ -222,15 +253,33 @@ export default function RegisterPage() {
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
             </Button>
           </form>
-          
+
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
+            <Link href={getLoginUrl()} className="text-primary hover:underline font-medium">
               Sign in
             </Link>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+// Loading fallback
+function RegisterLoading() {
+  return (
+    <div className="w-full min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+    </div>
+  )
+}
+
+// Main page with Suspense wrapper
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterLoading />}>
+      <RegisterPageContent />
+    </Suspense>
   )
 }

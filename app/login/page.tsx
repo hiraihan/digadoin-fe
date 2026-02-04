@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -9,35 +9,54 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Loader2, AlertCircle, Lock, Mail } from "lucide-react"
 import { toast } from "sonner"
+import { authService } from "@/app/services/authService"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+
+  // Get redirect params from URL
+  const redirectUrl = searchParams.get("redirect")
+  const planId = searchParams.get("planId")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
 
-    // Simulasi delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      await authService.login({
+        email,
+        password
+      })
 
-    // LOGIKA ROLE-BASED LOGIN
-    if (email === "admin@digado.in" && password === "admin123") {
-      localStorage.setItem("userRole", "admin") // Simpan role admin
-      toast.success("Login Successful", { description: "Welcome back, Commander." })
-      router.push("/dashboard")
-    } 
-    else if (email === "client@digado.in" && password === "client123") {
-      localStorage.setItem("userRole", "client") // Simpan role client
-      toast.success("Login Successful", { description: "Welcome to your Client Portal." })
-      router.push("/dashboard")
-    } 
-    else {
-      setError("Invalid credentials. Try 'admin@digado.in' or 'client@digado.in'.")
+      // Fetch user profile to get role
+      const user = await authService.getMe();
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem("userRole", user.role);
+        // Optional: Store other user info if needed
+        localStorage.setItem("userName", user.name);
+        localStorage.setItem("userEmail", user.email);
+      }
+
+      toast.success("Login Successful", { description: "Welcome back, " + user.name })
+
+      // Handle redirect after login
+      if (redirectUrl) {
+        // If there's a redirect URL, go there (optionally with planId)
+        const targetUrl = planId ? `${redirectUrl}?planId=${planId}` : redirectUrl
+        router.push(targetUrl)
+      } else {
+        // Default redirect to dashboard
+        router.push("/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid credentials.")
+    } finally {
       setIsLoading(false)
     }
   }
@@ -50,9 +69,9 @@ export default function LoginPage() {
           <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-30" />
           <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[150px] opacity-30" />
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
-          
+
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-auto opacity-40 rotate-[-12deg] hover:rotate-[-10deg] hover:scale-105 transition-all duration-1000 ease-in-out grayscale hover:grayscale-0">
-             <Image src="/modern-dashboard-dark-mode-ui.jpg" width={1200} height={800} alt="Preview" className="rounded-xl shadow-2xl border border-white/10" />
+            <Image src="/modern-dashboard-dark-mode-ui.jpg" width={1200} height={800} alt="Preview" className="rounded-xl shadow-2xl border border-white/10" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/50 to-transparent" />
         </div>
@@ -117,7 +136,17 @@ export default function LoginPage() {
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
             </Button>
           </form>
-          
+
+          <div className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href={redirectUrl || planId ? `/register?${new URLSearchParams({ ...(redirectUrl && { redirect: redirectUrl }), ...(planId && { planId }) }).toString()}` : "/register"}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign up
+            </Link>
+          </div>
+
           <div className="mt-4 text-xs text-center text-muted-foreground bg-white/5 p-3 rounded-lg border border-white/5">
             <p>Admin: <span className="text-white">admin@digado.in</span> / <span className="text-white">admin123</span></p>
             <p>Client: <span className="text-white">client@digado.in</span> / <span className="text-white">client123</span></p>
@@ -125,5 +154,23 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Loading fallback
+function LoginLoading() {
+  return (
+    <div className="w-full min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+    </div>
+  )
+}
+
+// Main page with Suspense wrapper
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

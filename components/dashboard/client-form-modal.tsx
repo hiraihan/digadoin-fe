@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { X, Loader2, User, Building2, Mail, Phone } from "lucide-react"
+import { X, Loader2, User, Building2, Mail, Phone, Lock } from "lucide-react"
 
 interface ClientFormModalProps {
     isOpen: boolean
@@ -17,6 +17,7 @@ interface ClientFormModalProps {
         phone: string
         status: string
     }
+    onSubmit?: (data: any) => Promise<void>
 }
 
 const statusOptions = [
@@ -25,7 +26,7 @@ const statusOptions = [
     { value: "pending", label: "Pending", color: "bg-yellow-500" },
 ]
 
-export function ClientFormModal({ isOpen, onClose, mode, clientData }: ClientFormModalProps) {
+export function ClientFormModal({ isOpen, onClose, mode, clientData, onSubmit }: ClientFormModalProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         name: clientData?.name || "",
@@ -35,6 +36,18 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData }: ClientFor
         status: clientData?.status || "active",
     })
 
+    useEffect(() => {
+        if (isOpen) {
+            setFormData({
+                name: clientData?.name || "",
+                company: clientData?.company || "",
+                email: clientData?.email || "",
+                phone: clientData?.phone || "",
+                status: clientData?.status || "active",
+            })
+        }
+    }, [isOpen, clientData])
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
@@ -43,11 +56,19 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData }: ClientFor
         e.preventDefault()
         setIsLoading(true)
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
-        setIsLoading(false)
-        onClose()
+        try {
+            if (onSubmit) {
+                await onSubmit(formData)
+            } else {
+                // Fallback simulation if no handler provided (for testing)
+                await new Promise((resolve) => setTimeout(resolve, 1000))
+            }
+            onClose()
+        } catch (error) {
+            console.error("Error submitting form:", error)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     if (!isOpen) return null
@@ -139,6 +160,31 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData }: ClientFor
                         </div>
                     </div>
 
+                    {/* Password (Create Mode Only) */}
+                    {mode === 'create' && (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Password
+                            </Label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    name="password"
+                                    type="password"
+                                    // defaultValue="12345678" // Optional default
+                                    onChange={handleChange}
+                                    placeholder="Enter password..."
+                                    className="h-12 pl-10 bg-white/5 border-white/10 focus:border-primary/50 rounded-xl"
+                                    required
+                                    minLength={8}
+                                />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground ml-1">
+                                Must be at least 8 characters.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Phone */}
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -169,8 +215,8 @@ export function ClientFormModal({ isOpen, onClose, mode, clientData }: ClientFor
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, status: option.value }))}
                                     className={`p-3 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${formData.status === option.value
-                                            ? "border-primary bg-primary/10 text-white"
-                                            : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                                        ? "border-primary bg-primary/10 text-white"
+                                        : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
                                         }`}
                                 >
                                     <div className={`w-2 h-2 rounded-full ${option.color}`} />

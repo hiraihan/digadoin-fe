@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -7,13 +9,13 @@ export function ContactSection() {
   return (
     <section id="contact" className="py-32 md:py-40 bg-black/90 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-[0.03]"></div>
-      
+
       <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="container px-6 md:px-16 max-w-[1400px] mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 lg:gap-24 items-center">
-          
+
           <div className="lg:col-span-2 space-y-8">
             <div>
               <p className="text-sm font-bold text-primary tracking-[0.3em] uppercase mb-4">
@@ -34,17 +36,17 @@ export function ContactSection() {
                 </div>
                 <div>
                   <p className="text-xs text-white/40 uppercase tracking-wider font-semibold mb-1">Email</p>
-                  <p className="text-white text-lg font-medium">hello@digado.in</p>
+                  <p className="text-white text-lg font-medium">mr7725570@gmail.com</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-5 group">
                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-primary group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300 border border-white/10">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider font-semibold mb-1">Phone</p>
-                  <p className="text-white text-lg font-medium">+62 812 3456 7890</p>
+                  <p className="text-xs text-white/40 uppercase tracking-wider font-semibold mb-1">Phone / WhatsApp</p>
+                  <p className="text-white text-lg font-medium">+62 823 3301 6806</p>
                 </div>
               </div>
 
@@ -53,9 +55,9 @@ export function ContactSection() {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                   <p className="text-xs text-white/40 uppercase tracking-wider font-semibold mb-1">Studio</p>
+                  <p className="text-xs text-white/40 uppercase tracking-wider font-semibold mb-1">Studio</p>
                   <p className="text-white text-lg font-medium leading-snug">
-                    Jakarta Selatan, Indonesia<br /> Tech Valley District
+                    Sleman, Yogyakarta<br /> <span className="text-base text-white/70">Jl. Ringroad Barat, Dowangan, Banyuraden</span>
                   </p>
                 </div>
               </div>
@@ -64,7 +66,7 @@ export function ContactSection() {
 
           <div className="lg:col-span-3">
             <div className="p-8 md:p-12 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-2xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.3)] relative overflow-hidden group/form hover:border-white/20 transition-all duration-500">
-               <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/[0.03] to-white/0 opacity-0 group-hover/form:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/[0.03] to-white/0 opacity-0 group-hover/form:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
 
               <form className="space-y-8 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

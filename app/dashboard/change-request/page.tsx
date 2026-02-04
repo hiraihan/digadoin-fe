@@ -1,12 +1,27 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { AlertCircle, Bug, Sparkles, Palette, HelpCircle, Upload, X, Loader2, CheckCircle2 } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { AlertCircle, Bug, Sparkles, Palette, HelpCircle, Upload, X, Loader2, CheckCircle2, FolderOpen } from "lucide-react"
 import { toast } from "sonner"
+import { projectService } from "@/app/services/projectService"
+
+interface ProjectOption {
+    id: number | string
+    name: string
+    stage: string
+}
 
 const requestTypes = [
     { value: "bug", label: "Bug Fix", icon: Bug, color: "text-red-500", bg: "bg-red-500/10 border-red-500/20" },
@@ -23,16 +38,41 @@ const priorityLevels = [
 ]
 
 export default function ChangeRequestPage() {
+    const searchParams = useSearchParams()
+    const projectIdParam = searchParams.get("projectId")
+
     const [isLoading, setIsLoading] = useState(false)
     const [isSubmitted, setIsSubmitted] = useState(false)
     const [files, setFiles] = useState<File[]>([])
+    const [projects, setProjects] = useState<ProjectOption[]>([])
+    const [loadingProjects, setLoadingProjects] = useState(true)
 
     const [formData, setFormData] = useState({
+        projectId: projectIdParam || "",
         type: "bug",
         priority: "medium",
         subject: "",
         description: "",
     })
+
+    // Fetch user's projects on mount
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const myProjects = await projectService.getMyProjects()
+                setProjects(myProjects.map(p => ({
+                    id: p.id,
+                    name: p.name || p.subdomain || `Project #${p.id}`,
+                    stage: p.stage || 'pending'
+                })))
+            } catch (error) {
+                console.error("Failed to fetch projects:", error)
+            } finally {
+                setLoadingProjects(false)
+            }
+        }
+        fetchProjects()
+    }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -51,18 +91,42 @@ export default function ChangeRequestPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        if (!formData.projectId) {
+            toast.error("Please select a project")
+            return
+        }
+
         if (!formData.subject || !formData.description) {
             toast.error("Please fill in all required fields")
             return
         }
 
         setIsLoading(true)
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-        setIsLoading(false)
-        setIsSubmitted(true)
-        toast.success("Request Submitted!", {
-            description: "We'll review your request and get back to you soon."
-        })
+        try {
+            // Import ticket service dynamically
+            const { ticketService } = await import("@/app/services/ticketService")
+
+            // Include project info in subject/description
+            const selectedProject = projects.find(p => String(p.id) === formData.projectId)
+
+            await ticketService.createTicket({
+                subject: formData.subject,
+                message: `Project: ${selectedProject?.name} (ID: ${formData.projectId})\nType: ${formData.type}\n\n${formData.description}`,
+                priority: formData.priority as "low" | "medium" | "high",
+                request_type: formData.type,
+                project_id: Number(formData.projectId)
+            })
+
+            setIsSubmitted(true)
+            toast.success("Request Submitted!", {
+                description: "We'll review your request and get back to you soon."
+            })
+        } catch (error: any) {
+            console.error("Create ticket error:", error)
+            toast.error(error.message || "Failed to submit request")
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     if (isSubmitted) {
@@ -76,14 +140,11 @@ export default function ChangeRequestPage() {
                     <p className="text-muted-foreground mb-6">
                         Your change request has been submitted successfully. Our team will review it and get back to you within 24-48 hours.
                     </p>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Request ID: <span className="text-white font-mono">CR-2025-001</span>
-                    </p>
                     <div className="flex gap-4 justify-center">
                         <Button
                             onClick={() => {
                                 setIsSubmitted(false)
-                                setFormData({ type: "bug", priority: "medium", subject: "", description: "" })
+                                setFormData({ projectId: "", type: "bug", priority: "medium", subject: "", description: "" })
                                 setFiles([])
                             }}
                             variant="outline"
@@ -91,7 +152,10 @@ export default function ChangeRequestPage() {
                         >
                             Submit Another
                         </Button>
-                        <Button className="bg-white text-black hover:bg-gray-200 rounded-xl h-12 px-6 font-bold">
+                        <Button
+                            className="bg-white text-black hover:bg-gray-200 rounded-xl h-12 px-6 font-bold"
+                            onClick={() => window.location.href = '/dashboard/tickets'}
+                        >
                             View My Tickets
                         </Button>
                     </div>
@@ -109,6 +173,43 @@ export default function ChangeRequestPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Project Selection */}
+                <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
+                    <Label className="text-sm font-semibold text-white mb-4 block">
+                        <FolderOpen className="w-4 h-4 inline mr-2" />
+                        Select Project *
+                    </Label>
+                    {loadingProjects ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Loading your projects...
+                        </div>
+                    ) : projects.length === 0 ? (
+                        <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">
+                            You don't have any projects yet. Please wait for your order to be processed.
+                        </div>
+                    ) : (
+                        <Select
+                            value={formData.projectId}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, projectId: value }))}
+                        >
+                            <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
+                                <SelectValue placeholder="Choose a project to request changes for" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {projects.map((project) => (
+                                    <SelectItem key={project.id} value={String(project.id)}>
+                                        <div className="flex items-center gap-2">
+                                            <span>{project.name}</span>
+                                            <span className="text-xs text-muted-foreground capitalize">({project.stage})</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                </div>
+
                 {/* Request Type */}
                 <div className="p-6 md:p-8 rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl">
                     <Label className="text-sm font-semibold text-white mb-4 block">Request Type</Label>
@@ -122,8 +223,8 @@ export default function ChangeRequestPage() {
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, type: type.value }))}
                                     className={`p-4 rounded-2xl border text-center transition-all ${isSelected
-                                            ? `${type.bg} ${type.color} border-current`
-                                            : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                                        ? `${type.bg} ${type.color} border-current`
+                                        : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
                                         }`}
                                 >
                                     <Icon className="w-6 h-6 mx-auto mb-2" />
@@ -147,8 +248,8 @@ export default function ChangeRequestPage() {
                                         type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, priority: priority.value }))}
                                         className={`flex-1 py-2.5 px-4 rounded-xl border text-sm font-medium transition-all ${isSelected
-                                                ? `${priority.bg} ${priority.color} border-current`
-                                                : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10"
+                                            ? `${priority.bg} ${priority.color} border-current`
+                                            : "border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10"
                                             }`}
                                     >
                                         {priority.label}
@@ -236,12 +337,13 @@ export default function ChangeRequestPage() {
                         type="button"
                         variant="outline"
                         className="border-white/10 bg-white/5 text-white hover:bg-white/10 rounded-xl h-12 px-6"
+                        onClick={() => window.history.back()}
                     >
                         Cancel
                     </Button>
                     <Button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || projects.length === 0}
                         className="bg-primary hover:bg-primary/90 text-white rounded-xl h-12 px-8 font-bold shadow-lg shadow-primary/20"
                     >
                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Request"}

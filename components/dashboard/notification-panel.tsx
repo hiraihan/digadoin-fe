@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Bell, Check, X, ShoppingBag, Users, DollarSign, MessageSquare, AlertCircle } from "lucide-react"
 
@@ -11,50 +12,10 @@ interface Notification {
     description: string
     time: string
     isRead: boolean
+    actionUrl?: string
 }
 
-const mockNotifications: Notification[] = [
-    {
-        id: "1",
-        type: "project",
-        title: "New Project Started",
-        description: "E-Learning Platform Revamp is now active",
-        time: "2m ago",
-        isRead: false,
-    },
-    {
-        id: "2",
-        type: "client",
-        title: "New Client Registered",
-        description: "Sarah Connor joined as a new client",
-        time: "1h ago",
-        isRead: false,
-    },
-    {
-        id: "3",
-        type: "payment",
-        title: "Payment Received",
-        description: "$2,500 from CoinBase Asia",
-        time: "3h ago",
-        isRead: true,
-    },
-    {
-        id: "4",
-        type: "message",
-        title: "New Support Message",
-        description: "Client requested project update",
-        time: "5h ago",
-        isRead: true,
-    },
-    {
-        id: "5",
-        type: "alert",
-        title: "Deadline Approaching",
-        description: "LMS Platform due in 3 days",
-        time: "1d ago",
-        isRead: true,
-    },
-]
+const mockNotifications: Notification[] = []
 
 const iconMap = {
     project: ShoppingBag,
@@ -73,19 +34,76 @@ const colorMap = {
 }
 
 export function NotificationPanel() {
+    const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
-    const [notifications, setNotifications] = useState(mockNotifications)
+    const [notifications, setNotifications] = useState<Notification[]>([])
+
+    // Fetch notifications
+    const fetchNotifications = async () => {
+        try {
+            const { api } = await import("@/app/services/api")
+            const data = await api.get<any[]>("/auth/notifications")
+
+            // Map API response to UI format
+            const mapped = data.map((n: any) => ({
+                id: n.id,
+                type: n.type === 'shopping-bag' ? 'project' : n.type, // Map backend type to frontend icon
+                title: n.title,
+                description: n.description,
+                time: new Date(n.created_at).toLocaleDateString(), // Simple date for now
+                isRead: n.is_read,
+                actionUrl: n.action_url
+            }))
+
+            setNotifications(mapped)
+        } catch (e) {
+            console.error("Failed to fetch notifications", e)
+        }
+    }
+
+    // Poll every 30s
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            fetchNotifications()
+            const interval = setInterval(fetchNotifications, 30000)
+            return () => clearInterval(interval)
+        }
+    }, [])
 
     const unreadCount = notifications.filter(n => !n.isRead).length
 
-    const markAllAsRead = () => {
-        setNotifications(notifications.map(n => ({ ...n, isRead: true })))
+    const markAllAsRead = async () => {
+        try {
+            const { api } = await import("@/app/services/api")
+            await api.put("/auth/notifications/read-all", {})
+            setNotifications(notifications.map(n => ({ ...n, isRead: true })))
+        } catch (e) { }
     }
 
-    const markAsRead = (id: string) => {
-        setNotifications(notifications.map(n =>
-            n.id === id ? { ...n, isRead: true } : n
-        ))
+    const handleNotificationClick = async (notification: Notification) => {
+        // 1. Close panel immediately for responsiveness
+        setIsOpen(false)
+
+        // 2. Navigate based on actionUrl or fallback
+        if (notification.actionUrl) {
+            router.push(notification.actionUrl)
+        } else {
+            router.push('/dashboard')
+        }
+
+        // 3. Mark as read in background (update local state immediately)
+        if (!notification.isRead) {
+            setNotifications(prev => prev.map(n =>
+                n.id === notification.id ? { ...n, isRead: true } : n
+            ))
+
+            try {
+                const { api } = await import("@/app/services/api")
+                await api.put(`/auth/notifications/${notification.id}/read`, {})
+            } catch (e) {
+                console.error("Failed to mark as read", e)
+            }
+        }
     }
 
     return (
@@ -117,9 +135,9 @@ export function NotificationPanel() {
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-white/5">
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-white">Notifications</h3>
+                                <h3 className="font-semibold text-sm text-white">Notifications</h3>
                                 {unreadCount > 0 && (
-                                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
                                         {unreadCount} new
                                     </span>
                                 )}
@@ -145,7 +163,7 @@ export function NotificationPanel() {
                                         return (
                                             <div
                                                 key={notification.id}
-                                                onClick={() => markAsRead(notification.id)}
+                                                onClick={() => handleNotificationClick(notification)}
                                                 className={`p-4 flex gap-3 cursor-pointer transition-colors hover:bg-white/[0.02] ${!notification.isRead ? "bg-primary/[0.02]" : ""
                                                     }`}
                                             >

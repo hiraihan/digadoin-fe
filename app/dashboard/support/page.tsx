@@ -1,116 +1,286 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { ticketService, Ticket, CreateTicketDTO } from "@/app/services/ticketService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Send, HelpCircle, FileQuestion } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { MessageSquare, Send, HelpCircle, Plus, Loader2, ArrowLeft, Clock } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SupportPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [replyText, setReplyText] = useState("")
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [newTicket, setNewTicket] = useState<CreateTicketDTO>({
+    subject: "",
+    message: "",
+    priority: "medium"
+  })
+
+  useEffect(() => {
+    loadTickets()
+  }, [])
+
+  const loadTickets = async () => {
+    setLoading(true)
+    try {
+      const data = await ticketService.getMyTickets()
+      setTickets(data)
+    } catch (error) {
+      console.error("Failed to load tickets", error)
+      toast.error("Could not load tickets")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTicket.subject || !newTicket.message) return
+
+    setSubmitting(true)
+    try {
+      const ticket = await ticketService.createTicket(newTicket)
+      setTickets(prev => [ticket, ...prev])
+      setNewTicket({ subject: "", message: "", priority: "medium" })
+      setIsCreateOpen(false)
+      toast.success("Ticket created successfully")
+    } catch (error) {
+      toast.error("Failed to create ticket")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleReply = async () => {
+    if (!selectedTicket || !replyText.trim()) return
+
+    setSubmitting(true)
+    try {
+      await ticketService.replyToTicket(selectedTicket.id, { message: replyText })
+      // Refresh ticket to get updated messages
+      const updated = await ticketService.getTicket(selectedTicket.id)
+      setSelectedTicket(updated)
+      setTickets(prev => prev.map(t => t.id === updated.id ? updated : t))
+      setReplyText("")
+      toast.success("Reply sent")
+    } catch (error) {
+      toast.error("Failed to send reply")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+      case 'answered': return 'bg-green-500/10 text-green-500 border-green-500/20'
+      case 'closed': return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+      default: return 'bg-white/10 text-white border-white/20'
+    }
+  }
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  }
+
   return (
-    <div className="max-w-5xl mx-auto h-[calc(100vh-140px)] flex flex-col">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Support Center</h1>
-        <p className="text-muted-foreground">Need help? Chat with us or browse the FAQs.</p>
-      </div>
-
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
-        {/* Kolom Kiri: FAQ & Info */}
-        <div className="hidden lg:flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
-          <div className="p-6 rounded-3xl bg-primary/10 border border-primary/20">
-            <h3 className="font-bold text-primary mb-2 flex items-center gap-2">
-              <HelpCircle size={20}/> Premium Support
-            </h3>
-            <p className="text-sm text-primary/80 leading-relaxed">
-              As a valued client, you have priority access to our engineering team. We typically respond within 2 hours during business days.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider px-2">Common Questions</h4>
-            {[
-              "How do I request a change order?",
-              "Where can I find API documentation?",
-              "How does the billing cycle work?",
-              "Can I add more team members?"
-            ].map((q, i) => (
-              <button key={i} className="w-full text-left p-4 rounded-2xl bg-[#111111]/80 border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all flex items-center justify-between group">
-                <span className="text-sm text-muted-foreground group-hover:text-white transition-colors">{q}</span>
-                <FileQuestion size={16} className="text-muted-foreground opacity-50 group-hover:opacity-100" />
-              </button>
-            ))}
-          </div>
+    <div className="max-w-5xl mx-auto space-y-8 pb-20">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Support Center</h1>
+          <p className="text-muted-foreground">Create and track your support tickets.</p>
         </div>
 
-        {/* Kolom Kanan: Chat Interface */}
-        <div className="lg:col-span-2 flex flex-col rounded-3xl bg-[#111111]/80 border border-white/5 backdrop-blur-xl overflow-hidden shadow-2xl">
-          {/* Chat Header */}
-          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">S</div>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#111111]"></div>
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-sm">Support Team</h4>
-                <p className="text-xs text-green-400">Online</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white">
-              <MoreHorizontal size={20} />
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" /> New Ticket
             </Button>
-          </div>
-
-          {/* Chat Messages Area */}
-          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6 bg-[url('/grid.svg')] bg-fixed opacity-90">
-            {/* Message: Support */}
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0 mt-1"></div>
-              <div className="space-y-1 max-w-[80%]">
-                <div className="p-4 rounded-2xl rounded-tl-none bg-white/10 text-white text-sm leading-relaxed">
-                  Hi there! I noticed your project milestone is coming up. Do you need any assistance with the UAT preparation?
-                </div>
-                <span className="text-[10px] text-muted-foreground pl-1">10:30 AM</span>
+          </DialogTrigger>
+          <DialogContent className="bg-[#111111] border-white/10 text-white">
+            <DialogHeader>
+              <DialogTitle>Create Support Ticket</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateTicket} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Subject</Label>
+                <Input
+                  value={newTicket.subject}
+                  onChange={e => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
+                  placeholder="Brief description of your issue"
+                  className="bg-white/5 border-white/10"
+                  required
+                />
               </div>
-            </div>
-
-            {/* Message: You */}
-            <div className="flex gap-4 flex-row-reverse">
-              <div className="w-8 h-8 rounded-full bg-primary flex-shrink-0 mt-1 flex items-center justify-center text-black font-bold text-xs">ME</div>
-              <div className="space-y-1 max-w-[80%]">
-                <div className="p-4 rounded-2xl rounded-tr-none bg-primary text-primary-foreground text-sm leading-relaxed">
-                  Yes, actually. I was wondering if we could schedule a quick call tomorrow to go over the testing credentials?
-                </div>
-                <span className="text-[10px] text-muted-foreground text-right pr-1 block">10:35 AM</span>
+              <div className="space-y-2">
+                <Label>Priority</Label>
+                <Select
+                  value={newTicket.priority}
+                  onValueChange={(value) => setNewTicket(prev => ({ ...prev, priority: value as any }))}
+                >
+                  <SelectTrigger className="w-full bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#111111] border-white/10 text-white">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 bg-[#0A0A0A] border-t border-white/5">
-            <div className="relative flex items-end gap-2">
-              <Textarea 
-                placeholder="Type your message..." 
-                className="min-h-[50px] max-h-[120px] bg-white/5 border-white/10 rounded-2xl focus:border-primary/50 resize-none py-3 pl-4 pr-12"
-              />
-              <Button size="icon" className="absolute right-2 bottom-2 h-8 w-8 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all">
-                <Send size={16} />
+              <div className="space-y-2">
+                <Label>Message</Label>
+                <Textarea
+                  value={newTicket.message}
+                  onChange={e => setNewTicket(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Describe your issue in detail..."
+                  className="bg-white/5 border-white/10 min-h-[120px]"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                Submit Ticket
               </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Ticket List */}
+        <div className="lg:col-span-1 space-y-4">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Tickets</h3>
+
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-            <p className="text-[10px] text-center text-muted-foreground mt-2">
-              Avg. response time: <span className="text-green-400 font-medium">5 mins</span>
-            </p>
-          </div>
+          ) : tickets.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground rounded-2xl bg-[#111111]/80 border border-white/5">
+              <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
+              <p>No tickets yet</p>
+              <p className="text-sm">Create one to get help</p>
+            </div>
+          ) : (
+            tickets.map(ticket => (
+              <button
+                key={ticket.id}
+                onClick={() => setSelectedTicket(ticket)}
+                className={`w-full text-left p-4 rounded-2xl border transition-all ${selectedTicket?.id === ticket.id
+                  ? 'bg-primary/10 border-primary/50'
+                  : 'bg-[#111111]/80 border-white/5 hover:border-white/10'
+                  }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h4 className="font-semibold text-white text-sm line-clamp-1">{ticket.subject}</h4>
+                  <Badge className={`shrink-0 text-[10px] ${getStatusColor(ticket.status)}`}>
+                    {ticket.status}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock size={12} /> {ticket.created_at ? formatTime(ticket.created_at) : 'Just now'}
+                </p>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Ticket Detail / Chat */}
+        <div className="lg:col-span-2">
+          {selectedTicket ? (
+            <Card className="bg-[#111111]/80 border-white/5 h-full flex flex-col">
+              <CardHeader className="border-b border-white/5">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden"
+                    onClick={() => setSelectedTicket(null)}
+                  >
+                    <ArrowLeft size={18} />
+                  </Button>
+                  <div>
+                    <CardTitle className="text-lg">{selectedTicket.subject}</CardTitle>
+                    <CardDescription className="flex items-center gap-2 mt-1">
+                      <Badge className={`text-[10px] ${getStatusColor(selectedTicket.status)}`}>
+                        {selectedTicket.status}
+                      </Badge>
+                      <span>• {selectedTicket.priority} priority</span>
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[400px]">
+                {selectedTicket.messages?.length > 0 ? (
+                  selectedTicket.messages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex gap-3 ${msg.sender_id === 1 ? 'justify-end' : ''}`}
+                    >
+                      <div className={`max-w-[80%] p-4 rounded-2xl ${msg.sender_id === 1
+                        ? 'bg-primary/20 rounded-tr-none'
+                        : 'bg-white/10 rounded-tl-none'
+                        }`}>
+                        <p className="text-sm text-white">{msg.message}</p>
+                        <span className="text-[10px] text-muted-foreground mt-2 block">
+                          {formatTime(msg.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <p>No messages in this ticket</p>
+                  </div>
+                )}
+              </CardContent>
+
+              {selectedTicket.status !== 'closed' && (
+                <div className="p-4 border-t border-white/5">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      placeholder="Type your reply..."
+                      className="bg-white/5 border-white/10 min-h-[60px] max-h-[100px]"
+                    />
+                    <Button
+                      onClick={handleReply}
+                      disabled={!replyText.trim() || submitting}
+                      className="shrink-0"
+                    >
+                      {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send size={18} />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+          ) : (
+            <div className="h-full flex items-center justify-center rounded-3xl bg-[#111111]/80 border border-white/5 min-h-[400px]">
+              <div className="text-center text-muted-foreground">
+                <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>Select a ticket to view details</p>
+                <p className="text-sm">or create a new one</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
-
-// Helper icon component
-function MoreHorizontal({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
-      <circle cx="5" cy="12" r="1" />
-    </svg>
   )
 }

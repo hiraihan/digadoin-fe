@@ -1,31 +1,12 @@
 import Image from "next/image"
 import { Quote } from "lucide-react"
+import { TestimonialsSection } from "@/app/types/content"
 
-const testimonials = [
-  {
-    quote:
-      "Sistem LMS yang dibangun sangat membantu operasional kursus kami. UI-nya intuitif dan performanya sangat cepat.",
-    author: "Budi Santoso",
-    role: "CEO, EduTech Indonesia",
-    image: "/diverse-group-avatars.png",
-  },
-  {
-    quote:
-      "Marketplace kami berjalan lancar dengan ribuan transaksi per hari. Tim support sangat responsif menangani kendala.",
-    author: "Sarah Wijaya",
-    role: "Founder, LocalMarket",
-    image: "/diverse-group-avatars.png",
-  },
-  {
-    quote:
-      "Website company profile baru kami meningkatkan konversi klien hingga 200%. Desainnya benar-benar world-class.",
-    author: "Michael Chen",
-    role: "Director, Creative Agency",
-    image: "/diverse-group-avatars.png",
-  },
-]
+interface TestimonialsProps {
+  data: TestimonialsSection
+}
 
-export function Testimonials() {
+export function Testimonials({ data }: TestimonialsProps) {
   return (
     <section className="py-32 md:py-40 bg-card/20 border-y border-border/30 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-20"></div>
@@ -33,11 +14,11 @@ export function Testimonials() {
 
       <div className="container px-6 md:px-16 max-w-[1600px] mx-auto relative z-10">
         <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-center mb-20 text-gradient-primary">
-          Dipercaya oleh Industri
+          {data.title}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-          {testimonials.map((item, index) => (
+          {data.items.map((item, index) => (
             <div
               key={index}
               className="glass-card p-8 md:p-10 rounded-3xl relative hover-lift transition-all duration-300 group"

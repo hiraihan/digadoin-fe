@@ -13,10 +13,34 @@ export function Navbar() {
   const pathname = usePathname()
 
   // 1. Hook useEffect harus dipanggil SEBELUM return apapun
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
+
   React.useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
     }
+
+    const verifyAuth = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null
+      if (!token) {
+        setIsLoggedIn(false)
+        return
+      }
+
+      try {
+        // Dynamically import to ensure client-side execution or avoid strict dep cycles if any
+        const { authService } = await import("@/app/services/authService")
+        await authService.getMe()
+        setIsLoggedIn(true)
+      } catch (e) {
+        console.warn("Token invalid", e)
+        localStorage.removeItem("token")
+        setIsLoggedIn(false)
+      }
+    }
+
+    verifyAuth()
+
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
@@ -50,8 +74,8 @@ export function Navbar() {
   ]
 
   // 3. BARU LAKUKAN PENGECEKAN DISINI (Setelah semua Hooks dipanggil)
-  // Sembunyikan Navbar di Dashboard & Login
-  if (pathname?.startsWith("/dashboard") || pathname === "/login") {
+  // Sembunyikan Navbar di Dashboard & Login & Register & Legal Pages & Payment Pages
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/payment") || pathname === "/login" || pathname === "/register" || pathname === "/terms" || pathname === "/privacy") {
     return null
   }
 
@@ -95,12 +119,21 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/login"
-            className="px-4 py-2 text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-          >
-            Log in
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="px-4 py-2 text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+            >
+              Log in
+            </Link>
+          )}
           <Button
             asChild
             className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] font-medium px-6"
@@ -133,13 +166,23 @@ export function Navbar() {
               </Link>
             ))}
             <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border/40">
-              <Link
-                href="/login"
-                className="text-center py-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/30 rounded-lg transition-all duration-200"
-                onClick={() => setIsOpen(false)}
-              >
-                Log in
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="text-center py-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/30 rounded-lg transition-all duration-200"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="text-center py-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/30 rounded-lg transition-all duration-200"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Log in
+                </Link>
+              )}
               <Button
                 asChild
                 className="w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg font-medium"

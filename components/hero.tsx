@@ -1,8 +1,33 @@
-import Link from "next/link"
+"use client"
+
+import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { HeroSection } from "@/app/types/content"
+import Link from "next/link"
 
-export function Hero() {
+interface HeroProps {
+  data: HeroSection
+}
+
+// Check if user is authenticated by looking for token
+const isAuthenticated = (): boolean => {
+  if (typeof window === 'undefined') return false
+  const token = localStorage.getItem("token")
+  return !!token
+}
+
+export function Hero({ data }: HeroProps) {
+  const router = useRouter()
+
+  const handleStartProject = () => {
+    if (isAuthenticated()) {
+      router.push("/dashboard/order")
+    } else {
+      router.push("/login?redirect=/dashboard/order")
+    }
+  }
+
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden pt-24 pb-16">
       <div className="absolute inset-0 bg-background">
@@ -18,29 +43,26 @@ export function Hero() {
           <div className="inline-flex items-center rounded-full border border-border/50 bg-card/30 px-4 py-2 text-sm backdrop-blur-xl hover:bg-card/40 transition-colors duration-300">
             <span className="flex h-2 w-2 rounded-full bg-green-500 mr-2.5 animate-pulse"></span>
             <span className="text-xs font-semibold tracking-wider uppercase text-foreground/90">
-              Accepting New Projects for Q4
+              {data.badge}
             </span>
           </div>
 
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-none text-gradient-primary">
-            Digital Empires <br />
-            <span className="text-gradient-accent">Built to Scale</span>
+            {data.titleLine1} <br />
+            <span className="text-gradient-accent">{data.titleLine2}</span>
           </h1>
 
           <p className="text-xl md:text-2xl lg:text-3xl text-muted-foreground max-w-4xl mx-auto leading-relaxed font-light tracking-tight">
-            We craft high-performance LMS platforms, Marketplaces, and Custom Web Applications that define the future of
-            digital business.
+            {data.description}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center pt-4">
             <Button
-              asChild
               size="lg"
               className="h-14 px-10 text-base rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover-glow font-semibold tracking-wide"
+              onClick={handleStartProject}
             >
-              <Link href="/start-project">
-                Start Your Project <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              {data.ctaPrimary} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button
               asChild
@@ -48,18 +70,13 @@ export function Hero() {
               size="lg"
               className="h-14 px-10 text-base rounded-full border-border bg-card/30 hover:bg-card/50 backdrop-blur-sm transition-all duration-300 font-semibold tracking-wide"
             >
-              <Link href="#projects">View Our Work</Link>
+              <Link href="#projects">{data.ctaSecondary}</Link>
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-16 pt-24 w-full max-w-7xl border-t border-border/30 mt-32">
-          {[
-            { label: "Projects Delivered", value: "150+" },
-            { label: "Client Satisfaction", value: "99%" },
-            { label: "Team Experts", value: "25+" },
-            { label: "Years Experience", value: "8+" },
-          ].map((stat, index) => (
+          {data.stats.map((stat, index) => (
             <div
               key={index}
               className="flex flex-col items-center justify-center p-6 hover:bg-card/20 rounded-2xl transition-all duration-300 group"
