@@ -1,22 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2, Lock, AlertCircle, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Loader2, Lock, AlertCircle, Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import { authService } from "@/app/services/authService"
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const token = searchParams.get("token")
+
     const [isLoading, setIsLoading] = useState(false)
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState("")
+
+    // Check if token exists
+    const hasToken = Boolean(token)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -32,16 +39,25 @@ export default function ResetPasswordPage() {
             return
         }
 
+        if (!token) {
+            setError("Invalid reset link. Please request a new password reset.")
+            return
+        }
+
         setIsLoading(true)
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false)
+        try {
+            await authService.resetPassword(token, password)
             toast.success("Password Reset Successful", {
                 description: "You can now login with your new password."
             })
             router.push("/login")
-        }, 1500)
+        } catch (err: any) {
+            const errorMessage = err?.detail || err?.message || "Failed to reset password. The link may be expired."
+            setError(errorMessage)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -84,62 +100,81 @@ export default function ResetPasswordPage() {
                         <p className="text-muted-foreground">Please create a new password for your account.</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {error && (
-                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm animate-in slide-in-from-top-2">
-                                <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                                {error}
+                    {!hasToken ? (
+                        <div className="space-y-6">
+                            <div className="p-6 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-center space-y-4">
+                                <div className="w-16 h-16 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center mx-auto">
+                                    <AlertTriangle size={32} />
+                                </div>
+                                <h3 className="text-xl font-semibold text-white">Invalid Reset Link</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    This password reset link is invalid or has expired. Please request a new one.
+                                </p>
                             </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New Password</Label>
-                            <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>
-                                <Input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="•••••••"
-                                    className="pl-10 pr-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
-                                    required
-                                    disabled={isLoading}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
+                            <Link href="/forgot-password">
+                                <Button className="w-full h-12 rounded-xl font-bold text-base bg-white text-black hover:bg-gray-200">
+                                    Request New Reset Link
+                                </Button>
+                            </Link>
                         </div>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {error && (
+                                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm animate-in slide-in-from-top-2">
+                                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                    {error}
+                                </div>
+                            )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm Password</Label>
-                            <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>
-                                <Input
-                                    id="confirmPassword"
-                                    type={showPassword ? "text" : "password"}
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="•••••••"
-                                    className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
-                                    required
-                                    disabled={isLoading}
-                                />
+                            <div className="space-y-2">
+                                <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New Password</Label>
+                                <div className="relative group">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="•••••••"
+                                        className="pl-10 pr-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
+                                        required
+                                        disabled={isLoading}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <Button type="submit" disabled={isLoading} className="w-full h-12 rounded-xl font-bold text-base bg-white text-black hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg shadow-white/10">
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update Password"}
-                        </Button>
-                    </form>
+                            <div className="space-y-2">
+                                <Label htmlFor="confirmPassword" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm Password</Label>
+                                <div className="relative group">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><Lock size={18} /></div>
+                                    <Input
+                                        id="confirmPassword"
+                                        type={showPassword ? "text" : "password"}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="•••••••"
+                                        className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 focus:bg-white/10 rounded-xl transition-all"
+                                        required
+                                        disabled={isLoading}
+                                    />
+                                </div>
+                            </div>
+
+                            <Button type="submit" disabled={isLoading} className="w-full h-12 rounded-xl font-bold text-base bg-white text-black hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg shadow-white/10">
+                                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update Password"}
+                            </Button>
+                        </form>
+                    )}
                     <div className="text-center">
                         <Link href="/login" className="inline-flex items-center text-sm text-muted-foreground hover:text-white transition-colors">
-                            <ArrowLeft className="mr-2 h-4 w-4" /> Cancel
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Login
                         </Link>
                     </div>
                 </div>
@@ -147,3 +182,16 @@ export default function ResetPasswordPage() {
         </div>
     )
 }
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="w-full min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+                <Loader2 className="w-8 h-8 animate-spin text-white" />
+            </div>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
+    )
+}
+

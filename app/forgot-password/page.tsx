@@ -6,22 +6,39 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2, Mail, CheckCircle, ArrowRight } from "lucide-react"
+import { ArrowLeft, Loader2, Mail, CheckCircle, AlertCircle } from "lucide-react"
+import { authService } from "@/app/services/authService"
+import { toast } from "sonner"
 
 export default function ForgotPasswordPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [issubmitted, setIsSubmitted] = useState(false)
     const [email, setEmail] = useState("")
+    const [error, setError] = useState("")
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError("")
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false)
+        try {
+            await authService.forgotPassword(email)
             setIsSubmitted(true)
-        }, 1500)
+            toast.success("Email sent", {
+                description: "Check your inbox for password reset instructions."
+            })
+        } catch (err: any) {
+            // Even on error, we might show success to prevent email enumeration
+            // But show error for network issues
+            if (err?.message?.includes("Network") || err?.message?.includes("fetch")) {
+                setError("Network error. Please check your connection and try again.")
+            } else {
+                // For security, still show success message
+                setIsSubmitted(true)
+            }
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -70,6 +87,12 @@ export default function ForgotPasswordPage() {
 
                     {!issubmitted ? (
                         <form onSubmit={handleSubmit} className="space-y-5">
+                            {error && (
+                                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm animate-in slide-in-from-top-2">
+                                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                    {error}
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email Address</Label>
                                 <div className="relative group">
@@ -99,7 +122,7 @@ export default function ForgotPasswordPage() {
                                 </div>
                                 <h3 className="text-xl font-semibold text-white">Check your email</h3>
                                 <p className="text-muted-foreground text-sm">
-                                    We have sent password reset instructions to <span className="text-white font-medium">{email}</span>
+                                    If an account exists with <span className="text-white font-medium">{email}</span>, you will receive password reset instructions.
                                 </p>
                             </div>
 
@@ -109,21 +132,14 @@ export default function ForgotPasswordPage() {
                                 </p>
                                 <Button
                                     variant="outline"
-                                    onClick={() => setIsSubmitted(false)}
+                                    onClick={() => {
+                                        setIsSubmitted(false)
+                                        setEmail("")
+                                    }}
                                     className="w-full h-12 rounded-xl border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white"
                                 >
                                     try another email address
                                 </Button>
-                            </div>
-
-                            {/* Temporary link for demo ONLY since backend is not connected */}
-                            <div className="pt-8 border-t border-white/5 text-center">
-                                <p className="text-xs text-muted-foreground mb-3 uppercase tracking-widest opacity-50">Demo Only</p>
-                                <Link href="/reset-password">
-                                    <Button variant="ghost" className="text-xs text-primary hover:text-primary/80 group">
-                                        Go to Reset Page <ArrowRight className="ml-1 w-3 h-3 transition-transform group-hover:translate-x-1" />
-                                    </Button>
-                                </Link>
                             </div>
                         </div>
                     )}
@@ -132,3 +148,4 @@ export default function ForgotPasswordPage() {
         </div>
     )
 }
+

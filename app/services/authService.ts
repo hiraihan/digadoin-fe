@@ -1,6 +1,10 @@
 import { api } from "./api"
 import { User, TokenResponse } from "@/app/types/api"
 
+interface MessageResponse {
+    message: string
+}
+
 export const authService = {
     login: async (credentials: any): Promise<TokenResponse> => {
         const data = await api.post<TokenResponse>("/auth/login", credentials)
@@ -13,8 +17,8 @@ export const authService = {
         return data
     },
 
-    register: async (userData: any): Promise<User> => {
-        return api.post<User>("/auth/register", userData)
+    register: async (userData: any): Promise<MessageResponse> => {
+        return api.post<MessageResponse>("/auth/register", userData)
     },
 
     getMe: async (options: any = {}): Promise<User> => {
@@ -33,5 +37,27 @@ export const authService = {
             localStorage.removeItem("token")
         }
         window.location.href = '/login'
+    },
+
+    // Password Reset
+    forgotPassword: async (email: string): Promise<MessageResponse> => {
+        return api.post<MessageResponse>("/auth/forgot-password", { email })
+    },
+
+    resetPassword: async (token: string, newPassword: string): Promise<MessageResponse> => {
+        return api.post<MessageResponse>("/auth/reset-password", {
+            token,
+            new_password: newPassword
+        })
+    },
+
+    // Email Verification
+    verifyEmail: async (token: string): Promise<MessageResponse> => {
+        return api.post<MessageResponse>("/auth/verify-email", { token })
+    },
+
+    resendVerification: async (email: string): Promise<MessageResponse> => {
+        return api.post<MessageResponse>("/auth/resend-verification", { email })
     }
 }
+

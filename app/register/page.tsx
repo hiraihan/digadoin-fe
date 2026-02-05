@@ -87,8 +87,8 @@ function RegisterPageContent() {
         description: "Please check your email to verify your account."
       })
 
-      // Redirect to login with preserved params
-      router.push(getLoginUrl())
+      // Redirect to check-email page instead of login
+      router.push(`/check-email?email=${encodeURIComponent(formData.email)}`)
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.")
     } finally {
