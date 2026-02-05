@@ -78,7 +78,7 @@ export function Navbar() {
     { name: "About", href: "/about" },
   ]
 
-  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/payment") || pathname === "/login" || pathname === "/register" || pathname === "/terms" || pathname === "/privacy") {
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/payment") || pathname === "/login" || pathname === "/register" || pathname === "/terms" || pathname === "/privacy" || pathname === "/check-email" || pathname === "/verify-email" || pathname === "/forgot-password" || pathname === "/reset-password") {
     return null
   }
 
